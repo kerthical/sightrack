@@ -14,10 +14,10 @@
     "strict": true,
     "noFallthroughCasesInSwitch": true,
     "noPropertyAccessFromIndexSignature": true,
-    "baseUrl": "./view",
+    "baseUrl": "./src",
     "paths": {
       "@/*": ["*"]
     }
   },
-  "include": ["view", "vite.config.ts"]
+  "include": ["src", "vite.config.ts"]
 }
