@@ -1,0 +1,33 @@
+{
+  "name": "sightrack",
+  "version": "0.0.1",
+  "description": "Inference of where people are looking from 360-degree video",
+  "license": "WTFPL",
+  "author": {
+    "name": "Kerthial",
+    "email": "kerthical@gmail.com"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "turbo dev --log-prefix none",
+    "build": "turbo build --log-prefix none",
+    "start": "turbo start --log-prefix none",
+    "lint": "turbo lint --log-prefix none",
+    "format": "turbo format --log-prefix none",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "turbo": "^1.10.16",
+    "@commitlint/cli": "^18.4.3",
+    "@commitlint/config-conventional": "^18.4.3",
+    "husky": "^8.0.3"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  }
+}

@@ -1,5 +1,6 @@
 .idea
 .vscode
+.turbo
 cmake-build-*/
 *.iws
 out/

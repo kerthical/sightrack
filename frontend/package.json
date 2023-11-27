@@ -1,18 +1,11 @@
 {
-  "name": "sightrack",
-  "version": "0.0.1",
-  "description": "Inference of where people are looking from 360-degree video",
-  "license": "WTFPL",
-  "author": {
-    "name": "Kerthial",
-    "email": "kerthical@gmail.com"
-  },
+  "name": "sightrack-frontend",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint --fix --ignore-path .gitignore .",
-    "format": "prettier --write --ignore-path .gitignore .",
-    "prepare": "cd .. && husky install frontend/.husky"
+    "start": "vite preview",
+    "lint": "eslint --fix --ignore-path ../.gitignore .",
+    "format": "prettier --write --ignore-path ../.gitignore ."
   },
   "dependencies": {
     "@mantine/core": "^7.2.2",
@@ -25,12 +18,10 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^18.4.3",
-    "@commitlint/config-conventional": "^18.4.3",
-    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/node": "^20.10.0",
     "@types/react": "^18.2.38",
     "@types/react-dom": "^18.2.17",
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@typescript-eslint/eslint-plugin": "^6.12.0",
     "@typescript-eslint/parser": "^6.12.0",
     "@vanilla-extract/vite-plugin": "^3.9.2",
@@ -41,8 +32,6 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-unused-imports": "^3.0.0",
-    "husky": "^8.0.3",
-    "lint-staged": "^15.1.0",
     "postcss": "^8.4.31",
     "postcss-preset-mantine": "^1.11.0",
     "postcss-simple-vars": "^7.0.1",
@@ -50,10 +39,6 @@
     "tailwindcss": "^3.3.5",
     "typescript": "^5.3.2",
     "vite": "^5.0.2"
-  },
-  "lint-staged": {
-    "*": "prettier --write --ignore-unknown",
-    "*.{js,jsx,ts,tsx}": "eslint --fix"
   },
   "prettier": {
     "semi": true,
@@ -114,11 +99,6 @@
           "unused-imports/no-unused-imports": "error"
         }
       }
-    ]
-  },
-  "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
     ]
   }
 }

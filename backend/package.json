@@ -1,0 +1,13 @@
+{
+  "name": "sightrack-backend",
+  "scripts": {
+    "dev": "nodemon --exec 'python runner.py python src/server.py --dev'",
+    "start": "python runner.py python src/server.py",
+    "lint": "python runner.py flake8",
+    "format": "python runner.py black .",
+    "prepare": "python runner.py pip install -r requirements.txt"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
