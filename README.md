@@ -1,8 +1,7 @@
 <div align="center">
-    <picture>
-      <img alt="" src="./logo.png" height="128">
-    </picture>
-    <h1 align="center">Sightrack</h1>
+    <img alt="" src="./logo.png" height="128">
+    <h1>Sightrack</h1>
+    <p>Inference of where people are looking from 360-degree video</p>
 </div>
 
 <p align="center">
