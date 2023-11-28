@@ -1,9 +1,9 @@
 {
   "name": "sightrack-backend",
   "scripts": {
-    "start": "python runner.py python src/server.py",
-    "lint": "python runner.py flake8 src --max-line-length=120",
-    "format": "python runner.py black .",
-    "prepare": "python runner.py pip install -r requirements.txt"
+    "start": "python runner.py start",
+    "lint": "python runner.py lint",
+    "format": "python runner.py format",
+    "prepare": "python runner.py prepare"
   }
 }

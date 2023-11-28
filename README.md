@@ -1,7 +1,8 @@
 <div align="center">
-    <img alt="" src="./logo.png" height="128">
+    <img alt="" src="document/logo.png" height="128">
     <h1>Sightrack</h1>
     <p>Inference of where people are looking from 360-degree video</p>
+    <p> ⚠️ This project is under development for research purposes; its release as OSS is WIP! ⚠️ </p>
 </div>
 
 <p align="center">

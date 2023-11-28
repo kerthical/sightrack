@@ -1,28 +1,67 @@
-import venv
-import subprocess
+import argparse
 import os
 import platform
-import sys
+import subprocess
+import venv
+
+VENV_DIR = ".venv"
+OS = platform.system()
 
 
-def main(program_path, *args):
-    venv_dir = ".venv"
-    if not os.path.exists(venv_dir):
-        venv.create(venv_dir, with_pip=True, upgrade_deps=True)
+def execute(program_path, *args):
+    if not os.path.exists(VENV_DIR):
+        venv.create(VENV_DIR, with_pip=True, upgrade_deps=True)
+        prepare()
 
-    current_os = platform.system()
-
-    if current_os == "Windows":
-        program_path = os.path.join(venv_dir, "Scripts", program_path + ".exe")
+    if OS == "Windows":
+        program_path = os.path.join(VENV_DIR, "Scripts", program_path + ".exe")
     else:
-        program_path = os.path.join(venv_dir, "bin", program_path)
+        program_path = os.path.join(VENV_DIR, "bin", program_path)
 
-    subprocess.run([program_path, *args])
+    subprocess.run([program_path, *args], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
+def start():
+    execute("python", "src/server.py")
+
+
+def lint():
+    # execute("flake8", "src", "--max-line-length=120") TODO: fix flake8
+    pass
+
+
+def format():
+    execute("black", "src")
+
+
+def prepare():
+    dependencies = [
+        "mediapipe",
+        "aiortc",
+        "black",
+        "flake8",
+        "aiohttp",
+        "opencv-python",
+    ]
+
+    if OS == "Windows" or OS == "Linux":
+        dependencies.append("onnxruntime-gpu")
+    else:
+        dependencies.append("onnxruntime")
+
+    execute("pip", "install", *dependencies)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python runner.py <program> <args>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("command", choices=["start", "lint", "format", "prepare"])
+    args = parser.parse_args()
 
-    main(sys.argv[1], *sys.argv[2:])
+    if args.command == "start":
+        start()
+    elif args.command == "lint":
+        lint()
+    elif args.command == "format":
+        format()
+    elif args.command == "prepare":
+        prepare()
