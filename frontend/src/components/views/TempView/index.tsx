@@ -2,7 +2,7 @@ import { Box, Loader } from '@mantine/core';
 import { useEffect, useRef } from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
 
-export default function IndexView() {
+export default function TempView() {
   const videoRef = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     const pc = new RTCPeerConnection();
@@ -31,7 +31,7 @@ export default function IndexView() {
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             const offer_1 = pc.localDescription as RTCSessionDescription;
-            const response = await fetch('/offer', {
+            const response = await fetch('/temp', {
               body: JSON.stringify({
                 sdp: offer_1.sdp,
                 type: offer_1.type,
@@ -67,7 +67,7 @@ export default function IndexView() {
             autoPlay={true}
             playsInline={true}
             ref={videoRef}
-            className="w-1/3"
+            className="w-1/2"
           />
         ) : (
           <Loader />

@@ -22,6 +22,7 @@ export default defineConfig(() => ({
     rollupOptions: {
       input: {
         index: resolve(root, 'index.html'),
+        temp: resolve(root, 'temp.html'),
       },
     },
   },
@@ -43,7 +44,7 @@ export default defineConfig(() => ({
           },
         }),
         tailwindcss({
-          content: [resolve(root, '**/*.{js,jsx,ts,tsx}')],
+          content: ['./src/**/*.{js,jsx,ts,tsx}'],
         }),
         cssnano(),
       ],

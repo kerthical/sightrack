@@ -2,7 +2,7 @@
   "name": "sightrack-backend",
   "scripts": {
     "start": "python runner.py python src/server.py",
-    "lint": "python runner.py flake8 src",
+    "lint": "python runner.py flake8 src --max-line-length=120",
     "format": "python runner.py black .",
     "prepare": "python runner.py pip install -r requirements.txt"
   }
