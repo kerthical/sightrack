@@ -90,7 +90,6 @@ def draw_pose(image, rotation_vector, translation_vector, image_points):
         axis, rotation_vector, translation_vector, camera_matrix, dist_coeffs
     )
 
-
     # yawを計算
     euler_angle = cv2.Rodrigues(rotation_vector)[0]
     yaw = euler_angle[1][0] * 180 / np.pi
@@ -108,9 +107,15 @@ def draw_pose(image, rotation_vector, translation_vector, image_points):
 
     # 軸を画像に描画
     nose_tip = tuple(image_points[0].astype(int))
-    image = cv2.line(image, nose_tip, tuple(imgpts[0].ravel().astype(int)), (255, 0, 0), 8)
-    image = cv2.line(image, nose_tip, tuple(imgpts[1].ravel().astype(int)), (0, 255, 0), 8)
-    image = cv2.line(image, nose_tip, tuple(imgpts[2].ravel().astype(int)), (0, 0, 255), 8)
+    image = cv2.line(
+        image, nose_tip, tuple(imgpts[0].ravel().astype(int)), (255, 0, 0), 8
+    )
+    image = cv2.line(
+        image, nose_tip, tuple(imgpts[1].ravel().astype(int)), (0, 255, 0), 8
+    )
+    image = cv2.line(
+        image, nose_tip, tuple(imgpts[2].ravel().astype(int)), (0, 0, 255), 8
+    )
 
     return image
 
@@ -163,7 +168,7 @@ def visualize(image, result):
     return annotated_image
 
 
-class LandmarkerModel:
+class LandmarkModel:
     def __init__(self, model_path: str):
         if not os.path.exists(model_path):
             os.makedirs(os.path.dirname(model_path), exist_ok=True)

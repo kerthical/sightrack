@@ -2,7 +2,7 @@ import { Box, Loader } from '@mantine/core';
 import { useEffect, useRef } from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
 
-export default function TempView() {
+export default function RemoteView() {
   const videoRef = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     const pc = new RTCPeerConnection();
@@ -17,10 +17,7 @@ export default function TempView() {
     navigator.mediaDevices
       .getUserMedia({
         audio: false,
-        video: {
-          width: 1280,
-          height: 720,
-        },
+        video: true,
       })
       .then(
         async function (stream) {
@@ -31,7 +28,7 @@ export default function TempView() {
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             const offer_1 = pc.localDescription as RTCSessionDescription;
-            const response = await fetch('/temp', {
+            const response = await fetch('/remote', {
               body: JSON.stringify({
                 sdp: offer_1.sdp,
                 type: offer_1.type,

@@ -21,8 +21,8 @@ export default defineConfig(() => ({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        index: resolve(root, 'index.html'),
-        temp: resolve(root, 'temp.html'),
+        remote: resolve(root, 'remote.html'),
+        local: resolve(root, 'local.html'),
       },
     },
   },
