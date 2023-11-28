@@ -10,10 +10,6 @@ import { defineConfig } from 'vite';
 const root = resolve('src');
 export default defineConfig(() => ({
   plugins: [viteReact(), vanillaExtractPlugin()],
-  server: {
-    port: 1420,
-    strictPort: true,
-  },
   root: root,
   resolve: {
     alias: {
@@ -46,7 +42,9 @@ export default defineConfig(() => ({
             'mantine-breakpoint-xl': '88em',
           },
         }),
-        tailwindcss(),
+        tailwindcss({
+          content: [resolve(root, '**/*.{js,jsx,ts,tsx}')],
+        }),
         cssnano(),
       ],
     },

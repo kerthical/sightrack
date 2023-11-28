@@ -12,15 +12,12 @@
     "backend"
   ],
   "scripts": {
-    "dev": "turbo dev --log-prefix none",
-    "build": "turbo build --log-prefix none",
-    "start": "turbo start --log-prefix none",
-    "lint": "turbo lint --log-prefix none",
-    "format": "turbo format --log-prefix none",
+    "start": "npm run build -w frontend && npm run start -w backend",
+    "lint": "npm run lint -ws",
+    "format": "npm run format -ws",
     "prepare": "husky install"
   },
   "devDependencies": {
-    "turbo": "^1.10.16",
     "@commitlint/cli": "^18.4.3",
     "@commitlint/config-conventional": "^18.4.3",
     "husky": "^8.0.3"

@@ -1,6 +1,7 @@
 .idea
 .vscode
 .turbo
+models
 cmake-build-*/
 *.iws
 out/

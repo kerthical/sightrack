@@ -1,9 +1,7 @@
 {
   "name": "sightrack-frontend",
   "scripts": {
-    "dev": "vite",
     "build": "vite build",
-    "start": "vite preview",
     "lint": "eslint --fix --ignore-path ../.gitignore .",
     "format": "prettier --write --ignore-path ../.gitignore ."
   },
