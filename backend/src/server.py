@@ -57,7 +57,6 @@ async def handle_shutdown(_):
     pcs.clear()
 
 
-
 async def handle_remote(request):
     params = await request.json()
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
