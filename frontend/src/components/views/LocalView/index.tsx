@@ -52,7 +52,7 @@ export default function LocalView() {
             autoPlay={true}
             playsInline={true}
             ref={videoRef}
-            className="w-[80%]"
+            className="min-w-[80%] w-[80%] max-w-[80%]"
           />
         ) : (
           <Loader />
