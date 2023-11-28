@@ -110,14 +110,14 @@ class ResNetModel:
         y2 = size * (cos(pitch) * cos(roll) - sin(pitch) * sin(yaw) * sin(roll)) + tdy
         x3 = size * (sin(yaw)) + tdx
         y3 = size * (-cos(yaw) * sin(pitch)) + tdy
-        # cv2.line(annotated_image, (int(tdx), int(tdy)), (int(x1), int(y1)), (0, 0, 255), 4)
-        # cv2.line(annotated_image, (int(tdx), int(tdy)), (int(x2), int(y2)), (0, 255, 0), 4)
+        cv2.line(annotated_image, (int(tdx), int(tdy)), (int(x1), int(y1)), (0, 0, 255), 8)
+        cv2.line(annotated_image, (int(tdx), int(tdy)), (int(x2), int(y2)), (0, 255, 0), 8)
         cv2.line(
             annotated_image, (int(tdx), int(tdy)), (int(x3), int(y3)), (255, 0, 0), 8
         )
         cv2.putText(
             img=annotated_image,
-            text=f"yaw: {yaw:.2f}, score: {score:.2f}",
+            text=f"yaw: {yaw:.2f}",
             org=(10, 30),
             fontFace=cv2.FONT_HERSHEY_SIMPLEX,
             fontScale=1,

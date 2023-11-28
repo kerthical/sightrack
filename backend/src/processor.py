@@ -1,11 +1,10 @@
 import sys
 import time
-import numpy as np
 
 from aiortc import MediaStreamTrack
 from av import VideoFrame
 
-from models.landmarker import LandmarkerModel
+from models.landmarker import LandmarkerModel, visualize
 from models.resnet import ResNetModel
 from models.yolo import YOLOModel
 
@@ -65,9 +64,9 @@ class VideoProcessor(MediaStreamTrack):
                         image = resnet_model.visualize(
                             image, largest_box, yaw, pitch, 0, largest_score[0]
                         )
-
-            else:
-                image = landmarker_model.visualize(image, landmark)
+            #
+            # else:
+            #     image = visualize(image, landmark)
         except Exception as e:
             print(e)
             sys.exit(1)

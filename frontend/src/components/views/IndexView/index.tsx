@@ -67,7 +67,7 @@ export default function IndexView() {
             autoPlay={true}
             playsInline={true}
             ref={videoRef}
-            className="w-1/3"
+            className="w-[80%]"
           />
         ) : (
           <Loader />

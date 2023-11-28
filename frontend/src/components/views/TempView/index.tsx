@@ -67,7 +67,7 @@ export default function TempView() {
             autoPlay={true}
             playsInline={true}
             ref={videoRef}
-            className="w-1/2"
+            className="w-[80%]"
           />
         ) : (
           <Loader />
