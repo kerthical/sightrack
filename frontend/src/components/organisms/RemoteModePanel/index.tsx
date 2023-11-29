@@ -3,19 +3,26 @@ import { useEffect, useRef, useState } from 'react';
 
 export default function RemoteModePanel() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [currentStatus, setCurrentStatus] = useState<'loading' | 'done'>(
+    'loading',
+  );
+  const [srcObject, setSrcObject] = useState<MediaStream | null>(null);
   const [detected, setDetected] = useState(false);
   const [yaw, setYaw] = useState(0);
   const [pitch, setPitch] = useState(0);
   const [roll, setRoll] = useState(0);
 
   useEffect(() => {
+    if (srcObject) {
+      videoRef.current!.srcObject = srcObject;
+    }
+  }, [currentStatus, srcObject]);
+
+  useEffect(() => {
     const pc = new RTCPeerConnection();
 
     pc.addEventListener('track', event => {
-      const stream = event.streams[0];
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+      setSrcObject(event.streams[0]);
     });
 
     pc.addEventListener('datachannel', event => {
@@ -29,10 +36,11 @@ export default function RemoteModePanel() {
         };
         setDetected(data.detected);
         setYaw(data.yaw);
-        setRoll(data.pitch);
-        setPitch(data.roll);
+        setPitch(data.pitch);
+        setRoll(data.roll);
       });
     });
+    pc.createDataChannel('data');
 
     navigator.mediaDevices
       .getUserMedia({
@@ -44,6 +52,22 @@ export default function RemoteModePanel() {
           pc.addTrack(track, stream);
         });
         await pc.setLocalDescription(await pc.createOffer());
+        await new Promise(resolve => {
+          if (pc.iceGatheringState === 'complete') {
+            resolve(null);
+          } else {
+            const checkGatheringState = () => {
+              if (pc.iceGatheringState === 'complete') {
+                pc.removeEventListener(
+                  'icegatheringstatechange',
+                  checkGatheringState,
+                );
+                resolve(null);
+              }
+            };
+            pc.addEventListener('icegatheringstatechange', checkGatheringState);
+          }
+        });
         const offer = pc.localDescription as RTCSessionDescription;
         const response = await fetch('/remote', {
           body: JSON.stringify({
@@ -57,17 +81,16 @@ export default function RemoteModePanel() {
         });
         const answer = (await response.json()) as RTCSessionDescriptionInit;
         await pc.setRemoteDescription(answer);
+        setCurrentStatus('done');
       })
       .catch(console.error);
-
-    pc.createDataChannel('data');
 
     return () => {
       pc.close();
     };
   }, []);
 
-  return videoRef.current?.srcObject !== null ? (
+  return currentStatus === 'done' ? (
     <>
       <video
         autoPlay={true}
@@ -80,9 +103,9 @@ export default function RemoteModePanel() {
         <br />
         Yaw: {yaw}
         <br />
-        Pitch: {roll}
+        Pitch: {pitch}
         <br />
-        Roll: {pitch}
+        Roll: {roll}
       </Text>
     </>
   ) : (

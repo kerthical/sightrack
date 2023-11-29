@@ -44,14 +44,15 @@ pyenv install 3.9.18
 pyenv global 3.9.18
 ```
 
-If you get an error with `pyenv install`, run `xcode-select --install`, restart your terminal, and try again.
-実行しているシェルがbashの場合は、`~/.bash_profile`に、zshの場合は`~/.zshrc`に、以下の行を追加してください。
+If you get an error with `pyenv install`, run `xcode-select --install`, restart your terminal, and try again. If the
+shell you are running is bash, add the following line to `~/.bash profile`, and if you are using zsh, add the following
+line to `~/.zshrc`.
 
 ```bash
 eval "$(pyenv init --path)"
 ```
 
-実行しているシェルがfishの場合は、`~/.config/fish/config.fish`に、以下の行を追加してください。
+If the shell you are running is fish, add the following line to `~/.config/fish/config.fish`.
 
 ```bash
 status --is-interactive; and pyenv init - | source

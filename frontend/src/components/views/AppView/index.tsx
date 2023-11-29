@@ -1,11 +1,11 @@
-import { SegmentedControl, Stack } from '@mantine/core';
+import { Button, Group, Stack, Text } from '@mantine/core';
 import { useState } from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
 import LocalModePanel from '@/components/organisms/LocalModePanel';
 import RemoteModePanel from '@/components/organisms/RemoteModePanel';
 
 export default function AppView() {
-  const [mode, setMode] = useState('remote');
+  const [mode, setMode] = useState<'local' | 'remote' | null>(null);
   return (
     <AppLayout>
       <Stack
@@ -17,21 +17,19 @@ export default function AppView() {
         mah="100dvh"
         className="overflow-hidden"
       >
-        <SegmentedControl
-          value={mode}
-          onChange={setMode}
-          data={[
-            {
-              label: 'Use web camera',
-              value: 'remote',
-            },
-            {
-              label: 'Use local file',
-              value: 'local',
-            },
-          ]}
-        />
-        {mode === 'remote' ? <RemoteModePanel /> : <LocalModePanel />}
+        {mode === null ? (
+          <>
+            <Text>Choose how to send data for inference</Text>
+            <Group>
+              <Button onClick={() => setMode('local')}>Use local file</Button>
+              <Button onClick={() => setMode('remote')}>Use webcam</Button>
+            </Group>
+          </>
+        ) : mode === 'remote' ? (
+          <RemoteModePanel />
+        ) : (
+          <LocalModePanel />
+        )}
       </Stack>
     </AppLayout>
   );

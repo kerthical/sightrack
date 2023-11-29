@@ -31,13 +31,16 @@ def process_frame(
 ) -> Tuple[np.array, bool, float, float, float]:
     landmark = landmark_model.detect(image, frame_count)
     boxes, scores = yolo_model.infer(image)
-    yaw, pitch, roll = 0, 0, 0
 
     if len(boxes) > 0:
         largest_box, largest_score = find_max_confidence_box_and_score(boxes, scores)
         if largest_score > 0.9:
             yaw, pitch, roll = resnet_model.infer(image, largest_box, largest_score)
             image = ResNetModel.visualize(image, largest_box, yaw, pitch, 0)
+        else:
+            yaw, pitch, roll = -1, -1, -1
+    else:
+        yaw, pitch, roll = -1, -1, -1
 
     image = LandmarkModel.visualize(image, landmark)
 

@@ -1,26 +1,51 @@
 import argparse
-import concurrent.futures
 import os
 import sys
+import traceback
 
 import cv2
-import tqdm
-
 
 
 def process_image(args: argparse.Namespace) -> None:
     image = cv2.imread(args.input)
-    processed_image = process_frame(image, 0)
-    cv2.imwrite(args.output, processed_image)
+    print("[*] Processing image file...")
+    print(f"    - size: {image.shape[1]}x{image.shape[0]}")
+    print(f"    - input: {args.input}")
+    print(f"    - output: {args.output}")
+    print()
+
+    from processor import process_frame
+
+    image, detected, yaw, pitch, roll = process_frame(image, 0)
+
+    print("[*] Result:")
+    print(f"    - detected: {detected}")
+    if detected:
+        print(f"    - yaw: {yaw}")
+        print(f"    - pitch: {pitch}")
+        print(f"    - roll: {roll}")
+    print()
+
+    output_extension = args.output.split(".")[-1]
+    if output_extension in ["jpg", "jpeg", "png"]:
+        cv2.imwrite(args.output, image)
+        print(f"[*] Image saved to {args.output}")
+    elif output_extension in ["csv"]:
+        with open(args.output, "w") as f:
+            f.write("detected,yaw,pitch,roll\n")
+            f.write(f"{detected},{yaw},{pitch},{roll}\n")
+        print(f"[*] CSV file saved to {args.output}")
+    else:
+        print(f"[!] Unknown file extension {output_extension}!")
+        sys.exit(1)
 
 
 def process_video(args: argparse.Namespace) -> None:
-    capture: cv2.VideoCapture = cv2.VideoCapture(args.file)
+    capture: cv2.VideoCapture = cv2.VideoCapture(args.input)
     if not capture.isOpened():
         print(f"[!] Error opening video file {args.file}!")
         sys.exit(1)
 
-    from processor import process_frame
     width: int = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     height: int = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps: int = int(capture.get(cv2.CAP_PROP_FPS))
@@ -35,24 +60,47 @@ def process_video(args: argparse.Namespace) -> None:
     print(f"    - output: {args.output}")
     print()
 
-    output: cv2.VideoWriter = cv2.VideoWriter(
-        args.output, cv2.VideoWriter_fourcc(*"mp4v"), fps, (width, height)
-    )
+    from processor import process_frame
+
     frame_count: int = 0
 
-    with tqdm.tqdm(
-            total=total_frames,
-            desc="Processing video file...",
-            unit="frames",
-            unit_scale=True,
-    ) as pbar:
+    output_extension = args.output.split(".")[-1]
+    if output_extension in ["jpg", "jpeg", "png"]:
+        pass
+    elif output_extension in ["mp4", "avi", "mov"]:
+        output: cv2.VideoWriter = cv2.VideoWriter(
+            args.output, cv2.VideoWriter_fourcc(*"mp4v"), fps, (width, height)
+        )
         while capture.isOpened():
             ret, frame = capture.read()
             if not ret:
                 break
-            output.write(process_frame(frame, frame_count))
+            image, detected, yaw, pitch, roll = process_frame(frame, frame_count)
+            output.write(image)
             frame_count += 1
-            pbar.update(1)
+            print(
+                f"\r[*] Processing frame {frame_count}/{total_frames} | detected: {detected}, yaw: {yaw}, pitch: {pitch}, roll: {roll}",
+                end="",
+            )
+        print(f"[*] Video saved to {args.output}")
+    elif output_extension in ["csv"]:
+        with open(args.output, "w") as f:
+            f.write("frame,detected,yaw,pitch,roll\n")
+            while capture.isOpened():
+                ret, frame = capture.read()
+                if not ret:
+                    break
+                image, detected, yaw, pitch, roll = process_frame(frame, frame_count)
+                f.write(f"{frame_count},{detected},{yaw},{pitch},{roll}\n")
+                frame_count += 1
+                print(
+                    f"\r[*] Processing frame {frame_count}/{total_frames} | detected: {detected}, yaw: {yaw}, pitch: {pitch}, roll: {roll}",
+                    end="",
+                )
+        print(f"[*] CSV file saved to {args.output}")
+    else:
+        print(f"[!] Unknown file extension {output_extension}!")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
@@ -71,18 +119,23 @@ if __name__ == "__main__":
         print(f"[!] File {args.input} is a directory!")
         sys.exit(1)
 
-    file_extension: str = args.file.split(".")[-1]
+    file_extension: str = args.input.split(".")[-1]
     if file_extension in ["jpg", "jpeg", "png"]:
-        process_image(args)
+        try:
+            process_image(args)
+        except Exception as e:
+            print(f"[!] Error processing image file {args.input}!")
+            print(e)
+            traceback.print_exc()
+            sys.exit(1)
     elif file_extension in ["mp4", "avi", "mov"]:
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(process_video, args)
-            try:
-                future.result()
-            except KeyboardInterrupt:
-                print("Process cancelled.")
-                executor.shutdown(wait=False)
-                sys.exit(1)
+        try:
+            process_video(args)
+        except Exception as e:
+            print(f"[!] Error processing video file {args.input}!")
+            print(e)
+            traceback.print_exc()
+            sys.exit(1)
     else:
         print(f"[!] Unknown file extension {file_extension}!")
         sys.exit(1)

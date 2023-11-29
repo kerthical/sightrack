@@ -42,6 +42,9 @@ npm start
 
 ### CLI
 
+Running `npm run cli` will execute the backend package's src/cli.py. This is useful for debugging and testing.
+Three `--`s are required because we are relaying with multiple programs.
+
 ```bash
-npm run cli -- [args]
+npm run cli -- -- -- [args]
 ```
