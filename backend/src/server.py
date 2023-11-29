@@ -10,7 +10,7 @@ from aiortc import (
     RTCSessionDescription,
     RTCDataChannel,
 )
-from aiortc.contrib.media import MediaPlayer, MediaRelay
+from aiortc.contrib.media import MediaPlayer
 from av.frame import Frame
 from av.packet import Packet
 from av.video import VideoFrame
@@ -35,8 +35,8 @@ class VideoStreamTransformTrack(MediaStreamTrack):
             self.start_time = time.time()
 
         if (
-            time.time() - self.start_time - frame.pts * frame.time_base * 1.0 >= 0.2
-            and self.last_image is not None
+                time.time() - self.start_time - frame.pts * frame.time_base * 1.0 >= 0.2
+                and self.last_image is not None
         ):
             frame = self.last_image
             return frame
@@ -105,7 +105,7 @@ async def handle_local(request: web.Request) -> web.Response:
         if part.name == "file":
             file_name = part.filename
             temp_file = tempfile.NamedTemporaryFile(
-                delete=False, suffix=file_name, dir="."
+                delete=False, suffix=file_name
             )
             while True:
                 chunk = await part.read_chunk()
