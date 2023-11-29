@@ -1,10 +1,12 @@
-import { Loader, Stack, Text } from '@mantine/core';
+import { Loader, Text } from '@mantine/core';
 import { useEffect, useRef, useState } from 'react';
 
 export default function RemoteModePanel() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [detected, setDetected] = useState(false);
   const [yaw, setYaw] = useState(0);
   const [pitch, setPitch] = useState(0);
+  const [roll, setRoll] = useState(0);
 
   useEffect(() => {
     const pc = new RTCPeerConnection();
@@ -17,22 +19,18 @@ export default function RemoteModePanel() {
     });
 
     pc.addEventListener('datachannel', event => {
-      console.log("DataChannel '%s' is created!", event.channel.label);
       const dataChannel = event.channel;
       dataChannel.addEventListener('message', (event: MessageEvent<string>) => {
-        console.log(
-          "Message from DataChannel '%s': '%s'",
-          dataChannel.label,
-          event.data,
-        );
-        if (event.type === 'face') {
-          const data = JSON.parse(event.data) as {
-            yaw: number;
-            pitch: number;
-          };
-          setYaw(data.yaw);
-          setPitch(data.pitch);
-        }
+        const data = JSON.parse(event.data) as {
+          detected: boolean;
+          yaw: number;
+          pitch: number;
+          roll: number;
+        };
+        setDetected(data.detected);
+        setYaw(data.yaw);
+        setRoll(data.pitch);
+        setPitch(data.roll);
       });
     });
 
@@ -41,39 +39,36 @@ export default function RemoteModePanel() {
         audio: false,
         video: true,
       })
-      .then(
-        async function (stream) {
-          stream.getTracks().forEach(function (track) {
-            pc.addTrack(track, stream);
-          });
-          try {
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            const offer_1 = pc.localDescription as RTCSessionDescription;
-            const response = await fetch('/remote', {
-              body: JSON.stringify({
-                sdp: offer_1.sdp,
-                type: offer_1.type,
-              }),
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              method: 'POST',
-            });
-            const answer = (await response.json()) as RTCSessionDescriptionInit;
-            return await pc.setRemoteDescription(answer);
-          } catch (e) {
-            alert(e);
-          }
-        },
-        function (err) {
-          alert('Could not acquire media: ' + err);
-        },
-      );
+      .then(async (stream: MediaStream) => {
+        stream.getTracks().forEach(function (track) {
+          pc.addTrack(track, stream);
+        });
+        await pc.setLocalDescription(await pc.createOffer());
+        const offer = pc.localDescription as RTCSessionDescription;
+        const response = await fetch('/remote', {
+          body: JSON.stringify({
+            sdp: offer.sdp,
+            type: offer.type,
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          method: 'POST',
+        });
+        const answer = (await response.json()) as RTCSessionDescriptionInit;
+        await pc.setRemoteDescription(answer);
+      })
+      .catch(console.error);
+
+    pc.createDataChannel('data');
+
+    return () => {
+      pc.close();
+    };
   }, []);
 
   return videoRef.current?.srcObject !== null ? (
-    <Stack>
+    <>
       <video
         autoPlay={true}
         playsInline={true}
@@ -81,11 +76,15 @@ export default function RemoteModePanel() {
         className="min-w-1/2 w-1/2 max-w-1/2"
       />
       <Text>
+        Detected: {detected ? 'Yes' : 'No'}
+        <br />
         Yaw: {yaw}
         <br />
-        Pitch: {pitch}
+        Pitch: {roll}
+        <br />
+        Roll: {pitch}
       </Text>
-    </Stack>
+    </>
   ) : (
     <Loader />
   );

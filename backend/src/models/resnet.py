@@ -32,7 +32,9 @@ class ResNetModel:
 
         self.onnx_session = onnxruntime.InferenceSession(model_path)
 
-    def infer(self, image: np.ndarray, box: Tuple[int, int, int, int], score: float) -> Tuple[float, float, float]:
+    def infer(
+        self, image: np.ndarray, box: Tuple[int, int, int, int], score: float
+    ) -> Tuple[float, float, float]:
         mean: np.ndarray = np.asarray([0.485, 0.456, 0.406], dtype=np.float32)
         std: np.ndarray = np.asarray([0.229, 0.224, 0.225], dtype=np.float32)
 
@@ -76,14 +78,20 @@ class ResNetModel:
             None,
             {"input": normalized_image_rgb},
         )[0]
-        yaw_deg: float = yaw_pitch_roll[0][0]
-        pitch_deg: float = yaw_pitch_roll[0][1]
-        roll_deg: float = yaw_pitch_roll[0][2]
+        yaw_deg: float = yaw_pitch_roll[0][0].item()
+        pitch_deg: float = yaw_pitch_roll[0][1].item()
+        roll_deg: float = yaw_pitch_roll[0][2].item()
 
         return yaw_deg, pitch_deg, roll_deg
 
     @staticmethod
-    def visualize(image: np.ndarray, box: Tuple[int, int, int, int], yaw: float, pitch: float, roll: float, score: float = 0.0) -> np.ndarray:
+    def visualize(
+        image: np.ndarray,
+        box: Tuple[int, int, int, int],
+        yaw: float,
+        pitch: float,
+        roll: float,
+    ) -> np.ndarray:
         annotated_image: np.ndarray = copy.deepcopy(image)
         size: int = 600
         x1: int = box[0]
@@ -108,27 +116,22 @@ class ResNetModel:
         from math import cos
 
         x1: float = size * (cos(yaw) * cos(roll)) + tdx
-        y1: float = size * (cos(pitch) * sin(roll) + cos(roll) * sin(pitch) * sin(yaw)) + tdy
+        y1: float = (
+            size * (cos(pitch) * sin(roll) + cos(roll) * sin(pitch) * sin(yaw)) + tdy
+        )
         x2: float = size * (-cos(yaw) * sin(roll)) + tdx
-        y2: float = size * (cos(pitch) * cos(roll) - sin(pitch) * sin(yaw) * sin(roll)) + tdy
+        y2: float = (
+            size * (cos(pitch) * cos(roll) - sin(pitch) * sin(yaw) * sin(roll)) + tdy
+        )
         x3: float = size * (sin(yaw)) + tdx
         y3: float = size * (-cos(yaw) * sin(pitch)) + tdy
         cv2.line(
-            annotated_image, (int(tdx), int(tdy)), (int(x1), int(y1)), (0, 0, 255), 8
+            annotated_image, (int(tdx), int(tdy)), (int(x1), int(y1)), (0, 0, 255), 2
         )
         cv2.line(
-            annotated_image, (int(tdx), int(tdy)), (int(x2), int(y2)), (0, 255, 0), 8
+            annotated_image, (int(tdx), int(tdy)), (int(x2), int(y2)), (0, 255, 0), 2
         )
         cv2.line(
-            annotated_image, (int(tdx), int(tdy)), (int(x3), int(y3)), (255, 0, 0), 8
-        )
-        cv2.putText(
-            img=annotated_image,
-            text=f"yaw: {yaw:.2f}",
-            org=(10, 30),
-            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-            fontScale=1,
-            color=(0, 0, 255),
-            thickness=4,
+            annotated_image, (int(tdx), int(tdy)), (int(x3), int(y3)), (255, 0, 0), 2
         )
         return annotated_image

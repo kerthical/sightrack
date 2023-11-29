@@ -18,7 +18,7 @@ def execute(program_path, *args):
     else:
         program_path = os.path.join(VENV_DIR, "bin", program_path)
 
-    subprocess.run([program_path, *args], check=True)
+    subprocess.run([program_path, *args])
 
 
 def start():
@@ -35,7 +35,7 @@ def lint():
 
 
 def prepare():
-    dependencies = ["mediapipe", "aiortc", "black", "flake8", "aiohttp", "opencv-python", ]
+    dependencies = ["mediapipe", "aiortc", "black", "flake8", "aiohttp", "opencv-python", "tqdm"]
 
     if OS == "Windows" or OS == "Linux":
         dependencies.append("onnxruntime-gpu")

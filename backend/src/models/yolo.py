@@ -28,10 +28,18 @@ class YOLOModel:
             os.remove(model_path + ".tar.gz")
             shutil.rmtree(model_path + "_tmp/")
 
-        self.onnx_session: onnxruntime.InferenceSession = onnxruntime.InferenceSession(model_path)
-        self.input_shapes: List[Tuple[int, int, int, int]] = [input.shape for input in self.onnx_session.get_inputs()]
-        self.input_names: List[str] = [input.name for input in self.onnx_session.get_inputs()]
-        self.output_names: List[str] = [output.name for output in self.onnx_session.get_outputs()]
+        self.onnx_session: onnxruntime.InferenceSession = onnxruntime.InferenceSession(
+            model_path
+        )
+        self.input_shapes: List[Tuple[int, int, int, int]] = [
+            input.shape for input in self.onnx_session.get_inputs()
+        ]
+        self.input_names: List[str] = [
+            input.name for input in self.onnx_session.get_inputs()
+        ]
+        self.output_names: List[str] = [
+            output.name for output in self.onnx_session.get_outputs()
+        ]
 
     def infer(self, image: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         temp_image: np.ndarray = np.copy(image)
@@ -70,8 +78,12 @@ class YOLOModel:
 
             if len(boxes_keep) > 0:
                 for box, score in zip(boxes_keep, scores_keep):
-                    x_min: int = int(max(box[2], 0) * image_width / self.input_shapes[0][3])
-                    y_min: int = int(max(box[3], 0) * image_height / self.input_shapes[0][2])
+                    x_min: int = int(
+                        max(box[2], 0) * image_width / self.input_shapes[0][3]
+                    )
+                    y_min: int = int(
+                        max(box[3], 0) * image_height / self.input_shapes[0][2]
+                    )
                     x_max: int = int(
                         min(box[4], self.input_shapes[0][3])
                         * image_width
@@ -86,7 +98,9 @@ class YOLOModel:
                     result_boxes.append([x_min, y_min, x_max, y_max])
                     result_scores.append(score[0])
 
-        result: Tuple[np.ndarray, np.ndarray] = np.asarray(result_boxes), np.asarray(result_scores)
+        result: Tuple[np.ndarray, np.ndarray] = np.asarray(result_boxes), np.asarray(
+            result_scores
+        )
         result_boxes, result_scores = result
 
         return result_boxes, result_scores

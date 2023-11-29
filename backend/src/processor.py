@@ -1,6 +1,8 @@
-from typing import Tuple, List, Optional
+from typing import Tuple, Optional
+
 import numpy as np
-from models.landmark import LandmarkModel, visualize
+
+from models.landmark import LandmarkModel
 from models.resnet import ResNetModel
 from models.yolo import YOLOModel
 
@@ -24,23 +26,19 @@ def find_max_confidence_box_and_score(
     return max_confidence_box, max_confidence_score
 
 
-def process_frame(image: np.array, frame_count: int) -> Tuple[np.array, bool, float, float]:
+def process_frame(
+    image: np.array, frame_count: int
+) -> Tuple[np.array, bool, float, float, float]:
     landmark = landmark_model.detect(image, frame_count)
+    boxes, scores = yolo_model.infer(image)
+    yaw, pitch, roll = 0, 0, 0
 
-    if len(landmark.face_landmarks) == 0:
-        boxes, scores = yolo_model.infer(image)
-        if len(boxes) > 0:
-            largest_box, largest_score = find_max_confidence_box_and_score(
-                boxes, scores
-            )
+    if len(boxes) > 0:
+        largest_box, largest_score = find_max_confidence_box_and_score(boxes, scores)
+        if largest_score > 0.9:
+            yaw, pitch, roll = resnet_model.infer(image, largest_box, largest_score)
+            image = ResNetModel.visualize(image, largest_box, yaw, pitch, 0)
 
-            if largest_score > 0.9:
-                yaw, pitch, roll = resnet_model.infer(image, largest_box, largest_score)
-                image = resnet_model.visualize(
-                    image, largest_box, yaw, pitch, 0, largest_score
-                )
+    image = LandmarkModel.visualize(image, landmark)
 
-    else:
-        image = visualize(image, landmark)
-
-    return image, len(landmark.face_landmarks) > 0, 0, 0
+    return image, len(boxes) > 0, yaw, pitch, roll
