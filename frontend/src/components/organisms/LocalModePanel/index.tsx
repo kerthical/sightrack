@@ -1,8 +1,7 @@
-import { Box, Loader } from '@mantine/core';
+import { Loader } from '@mantine/core';
 import { useEffect, useRef } from 'react';
-import AppLayout from '@/components/layouts/AppLayout';
 
-export default function LocalView() {
+export default function LocalModePanel() {
   const videoRef = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     const pc = new RTCPeerConnection();
@@ -37,27 +36,14 @@ export default function LocalView() {
       }
     })().catch(alert);
   }, []);
-
-  return (
-    <AppLayout>
-      <Box
-        w="100dvw"
-        h="100dvh"
-        maw="100dvw"
-        mah="100dvh"
-        className="flex flex-col items-center justify-center"
-      >
-        {videoRef.current?.srcObject !== null ? (
-          <video
-            autoPlay={true}
-            playsInline={true}
-            ref={videoRef}
-            className="min-w-[80%] w-[80%] max-w-[80%]"
-          />
-        ) : (
-          <Loader />
-        )}
-      </Box>
-    </AppLayout>
+  return videoRef.current?.srcObject !== null ? (
+    <video
+      autoPlay={true}
+      playsInline={true}
+      ref={videoRef}
+      className="min-w-1/2 w-1/2 max-w-1/2"
+    />
+  ) : (
+    <Loader />
   );
 }

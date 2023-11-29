@@ -2,8 +2,8 @@
   "name": "sightrack-backend",
   "scripts": {
     "start": "python runner.py start",
+    "cli": "python runner.py cli",
     "lint": "python runner.py lint",
-    "format": "python runner.py format",
     "prepare": "python runner.py prepare"
   }
 }

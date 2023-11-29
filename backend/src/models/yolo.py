@@ -1,14 +1,14 @@
-import copy
 import os
 import shutil
 import tarfile
 import urllib.request
+from typing import List, Tuple
 
 import cv2
 import numpy as np
 import onnxruntime
 
-YOLO_MODEL_URL = "https://s3.ap-northeast-2.wasabisys.com/pinto-model-zoo/423_6DRepNet360/resources.tar.gz"
+YOLO_MODEL_URL: str = "https://s3.ap-northeast-2.wasabisys.com/pinto-model-zoo/423_6DRepNet360/resources.tar.gz"
 
 
 class YOLOModel:
@@ -28,65 +28,65 @@ class YOLOModel:
             os.remove(model_path + ".tar.gz")
             shutil.rmtree(model_path + "_tmp/")
 
-        self.onnx_session = onnxruntime.InferenceSession(model_path)
-        self.input_shapes = [input.shape for input in self.onnx_session.get_inputs()]
-        self.input_names = [input.name for input in self.onnx_session.get_inputs()]
-        self.output_names = [output.name for output in self.onnx_session.get_outputs()]
+        self.onnx_session: onnxruntime.InferenceSession = onnxruntime.InferenceSession(model_path)
+        self.input_shapes: List[Tuple[int, int, int, int]] = [input.shape for input in self.onnx_session.get_inputs()]
+        self.input_names: List[str] = [input.name for input in self.onnx_session.get_inputs()]
+        self.output_names: List[str] = [output.name for output in self.onnx_session.get_outputs()]
 
-    def infer(self, image: np.ndarray):
-        temp_image = copy.deepcopy(image)
-        swap = (2, 0, 1)
-        image1 = cv2.resize(
+    def infer(self, image: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        temp_image: np.ndarray = np.copy(image)
+        swap: Tuple[int, int, int] = (2, 0, 1)
+        image1: np.ndarray = cv2.resize(
             temp_image,
             (
                 int(self.input_shapes[0][3]),
                 int(self.input_shapes[0][2]),
             ),
         )
-        image1 = np.divide(image1, 255.0)
-        image1 = image1[..., ::-1]
-        image1 = image1.transpose(swap)
-        image1 = np.ascontiguousarray(
+        image1: np.ndarray = np.divide(image1, 255.0)
+        image1: np.ndarray = image1[..., ::-1]
+        image1: np.ndarray = image1.transpose(swap)
+        image1: np.ndarray = np.ascontiguousarray(
             image1,
             dtype=np.float32,
         )
-        resized_image = image1
-        inferece_image = np.asarray([resized_image], dtype=np.float32)
-        boxes = self.onnx_session.run(
+        resized_image: np.ndarray = image1
+        inferece_image: np.ndarray = np.asarray([resized_image], dtype=np.float32)
+        boxes: np.ndarray = self.onnx_session.run(
             self.output_names,
             {input_name: inferece_image for input_name in self.input_names},
         )[0]
 
-        image_height = temp_image.shape[0]
-        image_width = temp_image.shape[1]
+        image_height: int = temp_image.shape[0]
+        image_width: int = temp_image.shape[1]
 
-        result_boxes = []
-        result_scores = []
+        result_boxes: List[List[int]] = []
+        result_scores: List[float] = []
         if len(boxes) > 0:
-            scores = boxes[:, 6:7]
-            keep_idxs = scores[:, 0] > 0.35
-            scores_keep = scores[keep_idxs, :]
-            boxes_keep = boxes[keep_idxs, :]
+            scores: np.ndarray = boxes[:, 6:7]
+            keep_idxs: np.ndarray = scores[:, 0] > 0.35
+            scores_keep: np.ndarray = scores[keep_idxs, :]
+            boxes_keep: np.ndarray = boxes[keep_idxs, :]
 
             if len(boxes_keep) > 0:
                 for box, score in zip(boxes_keep, scores_keep):
-                    x_min = int(max(box[2], 0) * image_width / self.input_shapes[0][3])
-                    y_min = int(max(box[3], 0) * image_height / self.input_shapes[0][2])
-                    x_max = int(
+                    x_min: int = int(max(box[2], 0) * image_width / self.input_shapes[0][3])
+                    y_min: int = int(max(box[3], 0) * image_height / self.input_shapes[0][2])
+                    x_max: int = int(
                         min(box[4], self.input_shapes[0][3])
                         * image_width
                         / self.input_shapes[0][3]
                     )
-                    y_max = int(
+                    y_max: int = int(
                         min(box[5], self.input_shapes[0][2])
                         * image_height
                         / self.input_shapes[0][2]
                     )
 
                     result_boxes.append([x_min, y_min, x_max, y_max])
-                    result_scores.append(score)
+                    result_scores.append(score[0])
 
-        result = np.asarray(result_boxes), np.asarray(result_scores)
+        result: Tuple[np.ndarray, np.ndarray] = np.asarray(result_boxes), np.asarray(result_scores)
         result_boxes, result_scores = result
 
         return result_boxes, result_scores

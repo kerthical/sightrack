@@ -1,115 +1,112 @@
-import asyncio
 import json
 import sys
 import time
+import traceback
+from typing import Optional, Union
 
 from aiohttp import web
-from aiortc import RTCPeerConnection, RTCSessionDescription
+from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription, RTCDataChannel
 from aiortc.contrib.media import MediaRelay, MediaPlayer
-from aiortc import MediaStreamTrack
-from av import VideoFrame
+from av.frame import Frame
+from av.packet import Packet
+from av.video import VideoFrame
+
 from processor import process_frame
 
 
 class VideoStreamTransformTrack(MediaStreamTrack):
-    def __init__(self, track):
-        super().__init__()
-        self.kind = "video"
-        self.track = track
-        self.last_img = None
-        self.start_time = None
+    kind: str = "video"
 
-    async def recv(self):
-        frame = await self.track.recv()
-        image = frame.to_ndarray(format="bgr24")
+    def __init__(self, track: MediaStreamTrack, channel: RTCDataChannel) -> None:
+        super().__init__()
+        self.track: MediaStreamTrack = track
+        self.channel = channel
+        self.last_image: Optional[VideoFrame] = None
+        self.start_time: Optional[float] = None
+
+    async def recv(self) -> VideoFrame:
+        frame: Union[Frame, Packet] = await self.track.recv()
 
         if self.start_time is None:
             self.start_time = time.time()
-        if (
-            time.time() - self.start_time - frame.pts * frame.time_base * 1.0 >= 0.2
-            and self.last_img is not None
-        ):
-            frame = self.last_img
+
+        if time.time() - self.start_time - frame.pts * frame.time_base * 1.0 >= 0.2 and self.last_image is not None:
+            frame = self.last_image
             return frame
 
         try:
-            image = process_frame(image, frame.pts)
+            image, detected, yaw, pitch = process_frame(frame.to_ndarray(format="bgr24"), frame.pts)
+            image: VideoFrame = VideoFrame.from_ndarray(image, format="bgr24")
+            image.pts = frame.pts
+            image.time_base = frame.time_base
+            self.last_image = image
+            if detected:
+                self.channel.emit("face", json.dumps({"yaw": yaw, "pitch": pitch}))
         except Exception as e:
-            print(e)
+            print("Error: ", e)
+            traceback.print_exc(file=sys.stdout)
             sys.exit(1)
-            pass
 
-        new_frame = VideoFrame.from_ndarray(image, format="bgr24")
-        new_frame.pts = frame.pts
-        new_frame.time_base = frame.time_base
-
-        self.last_img = new_frame
-
-        return new_frame
+        return image
 
 
-pcs = set()
-relay = MediaRelay()
+async def handle_index(_) -> web.FileResponse:
+    return web.FileResponse('../frontend/dist/index.html')
 
 
-async def handle_shutdown(_):
-    await asyncio.gather(*[pc.close() for pc in pcs])
-    pcs.clear()
-
-
-async def handle_remote(request):
-    params = await request.json()
-    offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
-    pc = RTCPeerConnection()
-    pcs.add(pc)
+async def handle_remote(request: web.Request) -> web.Response:
+    params: dict = await request.json()
+    offer: RTCSessionDescription = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
+    pc: RTCPeerConnection = RTCPeerConnection()
+    channel: RTCDataChannel = pc.createDataChannel("message")
 
     @pc.on("track")
-    def on_track(track):
-        pc.addTrack(VideoStreamTransformTrack(relay.subscribe(track)))
-
-    await pc.setRemoteDescription(offer)
-    answer = await pc.createAnswer()
-    await pc.setLocalDescription(answer)
-
-    return web.Response(
-        content_type="application/json",
-        text=json.dumps(
-            {"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}
-        ),
-    )
-
-
-async def handle_local(request):
-    params = await request.json()
-    offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
-    pc = RTCPeerConnection()
-    pcs.add(pc)
+    def on_track(track: MediaStreamTrack) -> None:
+        pc.addTrack(VideoStreamTransformTrack(track, channel))
 
     @pc.on("connectionstatechange")
-    async def on_connectionstatechange():
-        if pc.connectionState == "connected":
-            pc.addTrack(
-                VideoStreamTransformTrack(
-                    relay.subscribe(MediaPlayer(params["file"]).video)
-                )
-            )
+    async def on_connectionstatechange() -> None:
+        if pc.connectionState == "failed":
+            await pc.close()
+        elif pc.connectionState == "closed":
+            await pc.close()
 
     await pc.setRemoteDescription(offer)
     answer = await pc.createAnswer()
     await pc.setLocalDescription(answer)
 
-    return web.Response(
-        content_type="application/json",
-        text=json.dumps(
-            {"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}
-        ),
-    )
+    return web.Response(content_type="application/json",
+                        text=json.dumps({"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}), )
+
+
+async def handle_local(request: web.Request) -> web.Response:
+    params: dict = await request.json()
+    offer: RTCSessionDescription = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
+    pc: RTCPeerConnection = RTCPeerConnection()
+
+    @pc.on("connectionstatechange")
+    async def on_connectionstatechange() -> None:
+        if pc.connectionState == "connected":
+            pc.addTrack(VideoStreamTransformTrack(MediaPlayer(params["file"]).video))
+        elif pc.connectionState == "failed":
+            await pc.close()
+        elif pc.connectionState == "closed":
+            await pc.close()
+
+    await pc.setRemoteDescription(offer)
+    answer = await pc.createAnswer()
+    await pc.setLocalDescription(answer)
+
+    return web.Response(content_type="application/json",
+                        text=json.dumps({"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}), )
 
 
 if __name__ == "__main__":
-    app = web.Application()
-    app.on_shutdown.append(handle_shutdown)
+    app: web.Application = web.Application()
+    app.router.add_get("/", handle_index)
     app.router.add_post("/remote", handle_remote)
     app.router.add_post("/local", handle_local)
-    app.router.add_static("/", "../frontend/dist", show_index=True)
+    app.router.add_static("/", "../frontend/dist")
+
+    print("Server started")
     web.run_app(app, host="127.0.0.1", port=8080)

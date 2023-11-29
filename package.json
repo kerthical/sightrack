@@ -13,8 +13,8 @@
   ],
   "scripts": {
     "start": "npm run build -w frontend && npm run start -w backend",
+    "cli": "npm run cli -w backend",
     "lint": "npm run lint -ws",
-    "format": "npm run format -ws",
     "prepare": "husky install"
   },
   "devDependencies": {

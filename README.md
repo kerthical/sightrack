@@ -2,7 +2,7 @@
     <img alt="" src="document/logo.png" height="128">
     <h1>Sightrack</h1>
     <p>Inference of where people are looking from 360-degree video</p>
-    <p> ⚠️ This project is under development for research purposes; its release as OSS is WIP! ⚠️ </p>
+    <p><b> ⚠️ This project is under development for research. It will release as OSS is WIP! ⚠️ </b></p>
 </div>
 
 <p align="center">
@@ -11,14 +11,17 @@
     <img alt="" src="https://img.shields.io/badge/NODEJS-18.*-green?style=for-the-badge&logo=node.js&labelColor=black&link=.%2FLICENSE">
 </p>
 
-# Getting Started
+# ⚡ Quick Start
 
-## Prerequisites
+## Requirements
 
-- [Node.js](https://nodejs.org/en/) >= 18.0.0
-- [Python](https://www.python.org/) >= 3.9.0
+- Python 3.9 ([Python install guide](./document/guides/install-python.md))
+- Node.js 18 ([Node.js install guide](./document/guides/install-nodejs.md))
 
-## Installation
+## Setup
+
+Every time you run `npm install`, a Python virtual environment is automatically created (if it does not exist) under
+./backend and the necessary packages are installed.
 
 ```bash
 git clone https://github.com/kerthical/sightrack.git
@@ -26,8 +29,19 @@ cd sightrack
 npm install
 ```
 
-## Usage
+## Run
+
+### Web Interface
+
+Running `npm start` will build the frontend package and output it to ./frontend/dist. Then the backend package's
+src/server.py is executed. Visit https://127.0.0.1:8080 to view the web interface.
 
 ```bash
 npm start
+```
+
+### CLI
+
+```bash
+npm run cli -- [args]
 ```

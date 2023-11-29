@@ -18,31 +18,24 @@ def execute(program_path, *args):
     else:
         program_path = os.path.join(VENV_DIR, "bin", program_path)
 
-    subprocess.run([program_path, *args], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subprocess.run([program_path, *args], check=True)
 
 
 def start():
     execute("python", "src/server.py")
 
 
+def cli(*args):
+    execute("python", "src/cli.py", *args)
+
+
 def lint():
-    # execute("flake8", "src", "--max-line-length=120") TODO: fix flake8
+    execute("black", "src")
     pass
 
 
-def format():
-    execute("black", "src")
-
-
 def prepare():
-    dependencies = [
-        "mediapipe",
-        "aiortc",
-        "black",
-        "flake8",
-        "aiohttp",
-        "opencv-python",
-    ]
+    dependencies = ["mediapipe", "aiortc", "black", "flake8", "aiohttp", "opencv-python", ]
 
     if OS == "Windows" or OS == "Linux":
         dependencies.append("onnxruntime-gpu")
@@ -54,14 +47,17 @@ def prepare():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=["start", "lint", "format", "prepare"])
+    parser.add_argument("command", type=str, help="Command to execute")
+    parser.add_argument("args", nargs="*", help="Arguments for command")
     args = parser.parse_args()
 
     if args.command == "start":
         start()
+    elif args.command == "cli":
+        cli(*args.args)
     elif args.command == "lint":
         lint()
-    elif args.command == "format":
-        format()
     elif args.command == "prepare":
         prepare()
+    else:
+        parser.print_help()

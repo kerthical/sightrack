@@ -1,15 +1,16 @@
 import copy
+from math import sin
+from typing import Tuple, Union
 import os
 import shutil
 import tarfile
 import urllib.request
-from math import sin
 
 import cv2
 import numpy as np
 import onnxruntime
 
-RESNET_MODEL_URL = "https://s3.ap-northeast-2.wasabisys.com/pinto-model-zoo/423_6DRepNet360/resources.tar.gz"
+RESNET_MODEL_URL: str = "https://s3.ap-northeast-2.wasabisys.com/pinto-model-zoo/423_6DRepNet360/resources.tar.gz"
 
 
 class ResNetModel:
@@ -31,14 +32,14 @@ class ResNetModel:
 
         self.onnx_session = onnxruntime.InferenceSession(model_path)
 
-    def infer(self, image, box, score):
-        mean = np.asarray([0.485, 0.456, 0.406], dtype=np.float32)
-        std = np.asarray([0.229, 0.224, 0.225], dtype=np.float32)
+    def infer(self, image: np.ndarray, box: Tuple[int, int, int, int], score: float) -> Tuple[float, float, float]:
+        mean: np.ndarray = np.asarray([0.485, 0.456, 0.406], dtype=np.float32)
+        std: np.ndarray = np.asarray([0.229, 0.224, 0.225], dtype=np.float32)
 
-        debug_image = copy.deepcopy(image)
+        debug_image: np.ndarray = copy.deepcopy(image)
 
-        image_height = debug_image.shape[0]
-        image_width = debug_image.shape[1]
+        image_height: int = debug_image.shape[0]
+        image_width: int = debug_image.shape[1]
 
         x1: int = box[0]
         y1: int = box[1]
@@ -51,65 +52,67 @@ class ResNetModel:
         h: int = abs(y2 - y1)
         ew: float = w * 1.2
         eh: float = h * 1.2
-        ex1 = int(cx - ew / 2)
-        ex2 = int(cx + ew / 2)
-        ey1 = int(cy - eh / 2)
-        ey2 = int(cy + eh / 2)
+        ex1: int = int(cx - ew / 2)
+        ex2: int = int(cx + ew / 2)
+        ey1: int = int(cy - eh / 2)
+        ey2: int = int(cy + eh / 2)
 
-        ex1 = ex1 if ex1 >= 0 else 0
-        ex2 = ex2 if ex2 <= image_width else image_width
-        ey1 = ey1 if ey1 >= 0 else 0
-        ey2 = ey2 if ey2 <= image_height else image_height
+        ex1: int = ex1 if ex1 >= 0 else 0
+        ex2: int = ex2 if ex2 <= image_width else image_width
+        ey1: int = ey1 if ey1 >= 0 else 0
+        ey2: int = ey2 if ey2 <= image_height else image_height
 
-        inference_image = copy.deepcopy(debug_image)
-        head_image_bgr = inference_image[ey1:ey2, ex1:ex2, :]
-        resized_image_bgr = cv2.resize(head_image_bgr, (256, 256))
-        cropped_image_bgr = resized_image_bgr[16:240, 16:240, :]
+        inference_image: np.ndarray = copy.deepcopy(debug_image)
+        head_image_bgr: np.ndarray = inference_image[ey1:ey2, ex1:ex2, :]
+        resized_image_bgr: np.ndarray = cv2.resize(head_image_bgr, (256, 256))
+        cropped_image_bgr: np.ndarray = resized_image_bgr[16:240, 16:240, :]
 
         cropped_image_rgb: np.ndarray = cropped_image_bgr[..., ::-1]
         normalized_image_rgb: np.ndarray = (cropped_image_rgb / 255.0 - mean) / std
-        normalized_image_rgb = normalized_image_rgb.transpose(2, 0, 1)
+        normalized_image_rgb: np.ndarray = normalized_image_rgb.transpose(2, 0, 1)
         normalized_image_rgb: np.ndarray = normalized_image_rgb[np.newaxis, ...]
         normalized_image_rgb: np.ndarray = normalized_image_rgb.astype(np.float32)
         yaw_pitch_roll: np.ndarray = self.onnx_session.run(
             None,
             {"input": normalized_image_rgb},
         )[0]
-        yaw_deg = yaw_pitch_roll[0][0]
-        pitch_deg = yaw_pitch_roll[0][1]
-        roll_deg = yaw_pitch_roll[0][2]
+        yaw_deg: float = yaw_pitch_roll[0][0]
+        pitch_deg: float = yaw_pitch_roll[0][1]
+        roll_deg: float = yaw_pitch_roll[0][2]
 
         return yaw_deg, pitch_deg, roll_deg
 
     @staticmethod
-    def visualize(image, box, yaw, pitch, roll, score=0.0):
-        annotated_image = copy.deepcopy(image)
-        size = 600
+    def visualize(image: np.ndarray, box: Tuple[int, int, int, int], yaw: float, pitch: float, roll: float, score: float = 0.0) -> np.ndarray:
+        annotated_image: np.ndarray = copy.deepcopy(image)
+        size: int = 600
         x1: int = box[0]
         y1: int = box[1]
         x2: int = box[2]
         y2: int = box[3]
-        tdx = float((x1 + x2) // 2)
-        tdy = float((y1 + y2) // 2)
+        tdx: float = float((x1 + x2) // 2)
+        tdy: float = float((y1 + y2) // 2)
 
-        pitch = pitch * np.pi / 180
-        yaw = -(yaw * np.pi / 180)
-        roll = roll * np.pi / 180
+        pitch: float = pitch * np.pi / 180
+        yaw: float = -(yaw * np.pi / 180)
+        roll: float = roll * np.pi / 180
         if tdx is not None and tdy is not None:
-            tdx = tdx
-            tdy = tdy
+            tdx: float = tdx
+            tdy: float = tdy
         else:
+            height: int
+            width: int
             height, width = annotated_image.shape[:2]
-            tdx = width / 2
-            tdy = height / 2
+            tdx: float = width / 2
+            tdy: float = height / 2
         from math import cos
 
-        x1 = size * (cos(yaw) * cos(roll)) + tdx
-        y1 = size * (cos(pitch) * sin(roll) + cos(roll) * sin(pitch) * sin(yaw)) + tdy
-        x2 = size * (-cos(yaw) * sin(roll)) + tdx
-        y2 = size * (cos(pitch) * cos(roll) - sin(pitch) * sin(yaw) * sin(roll)) + tdy
-        x3 = size * (sin(yaw)) + tdx
-        y3 = size * (-cos(yaw) * sin(pitch)) + tdy
+        x1: float = size * (cos(yaw) * cos(roll)) + tdx
+        y1: float = size * (cos(pitch) * sin(roll) + cos(roll) * sin(pitch) * sin(yaw)) + tdy
+        x2: float = size * (-cos(yaw) * sin(roll)) + tdx
+        y2: float = size * (cos(pitch) * cos(roll) - sin(pitch) * sin(yaw) * sin(roll)) + tdy
+        x3: float = size * (sin(yaw)) + tdx
+        y3: float = size * (-cos(yaw) * sin(pitch)) + tdy
         cv2.line(
             annotated_image, (int(tdx), int(tdy)), (int(x1), int(y1)), (0, 0, 255), 8
         )

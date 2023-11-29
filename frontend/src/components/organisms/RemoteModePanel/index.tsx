@@ -1,9 +1,11 @@
-import { Box, Loader } from '@mantine/core';
-import { useEffect, useRef } from 'react';
-import AppLayout from '@/components/layouts/AppLayout';
+import { Loader, Stack, Text } from '@mantine/core';
+import { useEffect, useRef, useState } from 'react';
 
-export default function RemoteView() {
+export default function RemoteModePanel() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [yaw, setYaw] = useState(0);
+  const [pitch, setPitch] = useState(0);
+
   useEffect(() => {
     const pc = new RTCPeerConnection();
 
@@ -12,6 +14,26 @@ export default function RemoteView() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
+    });
+
+    pc.addEventListener('datachannel', event => {
+      console.log("DataChannel '%s' is created!", event.channel.label);
+      const dataChannel = event.channel;
+      dataChannel.addEventListener('message', (event: MessageEvent<string>) => {
+        console.log(
+          "Message from DataChannel '%s': '%s'",
+          dataChannel.label,
+          event.data,
+        );
+        if (event.type === 'face') {
+          const data = JSON.parse(event.data) as {
+            yaw: number;
+            pitch: number;
+          };
+          setYaw(data.yaw);
+          setPitch(data.pitch);
+        }
+      });
     });
 
     navigator.mediaDevices
@@ -50,26 +72,21 @@ export default function RemoteView() {
       );
   }, []);
 
-  return (
-    <AppLayout>
-      <Box
-        w="100dvw"
-        h="100dvh"
-        maw="100dvw"
-        mah="100dvh"
-        className="flex flex-col items-center justify-center"
-      >
-        {videoRef.current?.srcObject !== null ? (
-          <video
-            autoPlay={true}
-            playsInline={true}
-            ref={videoRef}
-            className="min-w-[80%] w-[80%] max-w-[80%]"
-          />
-        ) : (
-          <Loader />
-        )}
-      </Box>
-    </AppLayout>
+  return videoRef.current?.srcObject !== null ? (
+    <Stack>
+      <video
+        autoPlay={true}
+        playsInline={true}
+        ref={videoRef}
+        className="min-w-1/2 w-1/2 max-w-1/2"
+      />
+      <Text>
+        Yaw: {yaw}
+        <br />
+        Pitch: {pitch}
+      </Text>
+    </Stack>
+  ) : (
+    <Loader />
   );
 }
