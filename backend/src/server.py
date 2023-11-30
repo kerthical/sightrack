@@ -52,7 +52,7 @@ class VideoStreamTransformTrack(MediaStreamTrack):
         if self.channel.readyState == "open":
             self.channel.send(
                 json.dumps(
-                    {"detected": detected, "yaw": yaw, "pitch": pitch, "roll": roll}
+                    {"detected": detected, "yaw": yaw, "pitch": pitch, "roll": roll, "frame_count": frame.pts}
                 )
             )
 

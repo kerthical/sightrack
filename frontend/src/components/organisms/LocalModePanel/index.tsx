@@ -1,5 +1,8 @@
-import { Button, FileButton, Text } from '@mantine/core';
+import { Button, FileButton } from '@mantine/core';
+import { useListState } from '@mantine/hooks';
 import { useEffect, useRef, useState } from 'react';
+import FaceChart from '@/components/molecules/FaceChart';
+import { Frame } from '@/types/frame.ts';
 
 export default function LocalModePanel() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -7,10 +10,7 @@ export default function LocalModePanel() {
     'idle' | 'loading' | 'done'
   >('idle');
   const [srcObject, setSrcObject] = useState<MediaStream | null>(null);
-  const [detected, setDetected] = useState(false);
-  const [yaw, setYaw] = useState(0);
-  const [pitch, setPitch] = useState(0);
-  const [roll, setRoll] = useState(0);
+  const [series, handlers] = useListState<Frame>();
 
   useEffect(() => {
     if (srcObject) {
@@ -23,18 +23,11 @@ export default function LocalModePanel() {
       <video
         autoPlay={true}
         playsInline={true}
+        controls={true}
         ref={videoRef}
         className="min-w-1/2 w-1/2 max-w-1/2"
       />
-      <Text>
-        Detected: {detected ? 'Yes' : 'No'}
-        <br />
-        Yaw: {yaw}
-        <br />
-        Pitch: {pitch}
-        <br />
-        Roll: {roll}
-      </Text>
+      <FaceChart series={series} />
     </>
   ) : (
     <>
@@ -56,16 +49,8 @@ export default function LocalModePanel() {
               dataChannel.addEventListener(
                 'message',
                 (event: MessageEvent<string>) => {
-                  const data = JSON.parse(event.data) as {
-                    detected: boolean;
-                    yaw: number;
-                    pitch: number;
-                    roll: number;
-                  };
-                  setDetected(data.detected);
-                  setYaw(data.yaw);
-                  setPitch(data.pitch);
-                  setRoll(data.roll);
+                  const data = JSON.parse(event.data) as Frame;
+                  handlers.append(data);
                 },
               );
             });
