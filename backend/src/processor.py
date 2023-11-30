@@ -28,20 +28,21 @@ class ImageProcessor:
 
     @staticmethod
     def estimate_gaze_point(
-        image: np.array, yaw: float, pitch: float, head_position: Tuple[float, float]
+            image: np.array, yaw: float, pitch: float, head_box: Tuple[float, float, float, float]
     ) -> Tuple[int, int]:
         width = image.shape[1]
         height = image.shape[0]
-        camera_offset_x = width / 2 + head_position[0]
-        camera_offset_y = height / 2 + head_position[1]
+        face_center_x = (head_box[0] + head_box[2]) / 2
+        face_center_y = (head_box[1] + head_box[3]) / 2
         yaw_rad = np.deg2rad(yaw)
         pitch_rad = np.deg2rad(pitch)
-        gaze_x = camera_offset_x + (yaw_rad * camera_offset_x)
-        gaze_y = camera_offset_y - (pitch_rad * camera_offset_y)
+        gaze_x = face_center_x + (yaw_rad * width / 2)
+        gaze_y = face_center_y - (pitch_rad * height / 2)
         gaze_x = np.clip(gaze_x, 0, width)
         gaze_y = np.clip(gaze_y, 0, height)
 
         return int(gaze_x), int(gaze_y)
+
 
     @staticmethod
     def apply_heatmap(
@@ -83,9 +84,10 @@ class ImageProcessor:
 
     def process_frame(
         self, image: np.array
-    ) -> Tuple[np.array, bool, float, float, float, float, float]:
+    ) -> Tuple[np.array, bool, float, float, float, float, float, np.array, float]:
         boxes, scores = self.yolo_model.infer(image)
         yaw, pitch, roll, gaze_x, gaze_y = 0, 0, 0, 0, 0
+        largest_box, largest_score = None, None
 
         if len(boxes) > 0:
             largest_box, largest_score = self.find_max_confidence_box_and_score(
@@ -101,7 +103,7 @@ class ImageProcessor:
             roll = self.smooth_value(roll, self.prev_roll)
             gaze_x = self.smooth_value(gaze_x, self.prev_gaze_x)
             gaze_y = self.smooth_value(gaze_y, self.prev_gaze_y)
-            image = ResNetModel.visualize(image, largest_box, yaw, pitch, roll)
+            image = ResNetModel.visualize(image, largest_box, yaw, pitch, 0)
             image = self.apply_heatmap(
                 image,
                 int(gaze_x),
@@ -115,4 +117,4 @@ class ImageProcessor:
             self.prev_gaze_x = gaze_x
             self.prev_gaze_y = gaze_y
 
-        return image, len(boxes) > 0, yaw, pitch, roll, gaze_x, gaze_y
+        return image, len(boxes) > 0, yaw, pitch, 0, gaze_x, gaze_y, largest_box, largest_score

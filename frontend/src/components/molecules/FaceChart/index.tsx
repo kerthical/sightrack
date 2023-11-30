@@ -20,12 +20,9 @@ export default function FaceChart(props: FaceChartProps) {
     median = sortedYaws[middle];
   }
 
-  const yaws = props.series.map((frame, index) => ({
-    x: index,
-    y: frame.detected ? frame.yaw / 90 - median : null,
-    fillColor:
-      frame.yaw > 40 ? '#00E396' : frame.yaw < -40 ? '#FEB019' : '#008FFB',
-  }));
+  const yaws = props.series.map(frame =>
+    frame.detected ? frame.yaw / 90 - median : null,
+  );
 
   return (
     <Chart
@@ -50,30 +47,16 @@ export default function FaceChart(props: FaceChartProps) {
         annotations: {
           yaxis: [
             {
-              y: 0.5,
-              borderColor: '#00E396',
+              y: 0.3333,
               fillColor: '#00E396',
-              label: {
-                borderColor: '#00E396',
-                style: {
-                  color: '#fff',
-                  background: '#00E396',
-                },
-                text: 'yaw over 40°',
-              },
+              borderColor: '#00E396',
+              opacity: 0.3,
             },
             {
-              y: -0.5,
-              borderColor: '#FEB019',
+              y: -0.3333,
               fillColor: '#FEB019',
-              label: {
-                borderColor: '#FEB019',
-                style: {
-                  color: '#fff',
-                  background: '#FEB019',
-                },
-                text: 'yaw under -40°',
-              },
+              borderColor: '#FEB019',
+              opacity: 0.3,
             },
           ],
         },
@@ -89,9 +72,14 @@ export default function FaceChart(props: FaceChartProps) {
         legend: {
           show: false,
         },
+        markers: {
+          size: 0,
+          fillOpacity: 0,
+          strokeOpacity: 0,
+        },
         xaxis: {
           type: 'numeric',
-          range: 1000,
+          range: 200,
           labels: {
             show: false,
           },

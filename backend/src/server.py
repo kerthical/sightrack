@@ -1,8 +1,6 @@
 import json
-import os
 import tempfile
 import time
-import traceback
 from typing import Optional, Union
 
 from aiohttp import web, MultipartReader
@@ -53,6 +51,8 @@ class VideoStreamTransformTrack(MediaStreamTrack):
                 roll,
                 gaze_x,
                 gaze_y,
+                largest_box,
+                largest_score,
             ) = self.processor.process_frame(frame.to_ndarray(format="bgr24"))
             image: VideoFrame = VideoFrame.from_ndarray(image, format="bgr24")
             image.pts = frame.pts
@@ -70,6 +70,13 @@ class VideoStreamTransformTrack(MediaStreamTrack):
                             "gaze_x": gaze_x,
                             "gaze_y": gaze_y,
                             "frame_count": frame.pts,
+                            "box": {
+                                "x1": largest_box[0].item(),
+                                "y1": largest_box[1].item(),
+                                "x2": largest_box[2].item(),
+                                "y2": largest_box[3].item(),
+                            } if largest_box is not None else None,
+                            "score": largest_score if largest_score is not None else None,
                         }
                     )
                 )
@@ -77,7 +84,6 @@ class VideoStreamTransformTrack(MediaStreamTrack):
             return image
         except Exception as e:
             print(e)
-            traceback.print_exc()
             pass
 
 

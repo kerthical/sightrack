@@ -6,4 +6,11 @@ export type Frame = {
   gaze_x: number;
   gaze_y: number;
   frame_count: number;
+  box?: {
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+  };
+  score?: number;
 };
