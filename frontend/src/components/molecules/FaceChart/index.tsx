@@ -8,7 +8,25 @@ interface FaceChartProps {
 
 export default function FaceChart(props: FaceChartProps) {
   const { width } = useViewportSize();
-  const yaws = props.series.map(frame => Math.abs(frame.yaw / 180)).slice(-100);
+  const detectedYaws = props.series
+    .filter(frame => frame.detected)
+    .map(frame => frame.yaw / 90);
+  const sortedYaws = [...detectedYaws].sort((a, b) => a - b);
+  const middle = Math.floor(sortedYaws.length / 2);
+  let median: number;
+  if (sortedYaws.length % 2 === 0) {
+    median = (sortedYaws[middle - 1] + sortedYaws[middle]) / 2;
+  } else {
+    median = sortedYaws[middle];
+  }
+
+  const yaws = props.series.map((frame, index) => ({
+    x: index,
+    y: frame.detected ? frame.yaw / 90 - median : null,
+    fillColor:
+      frame.yaw > 40 ? '#00E396' : frame.yaw < -40 ? '#FEB019' : '#008FFB',
+  }));
+
   return (
     <Chart
       options={{
@@ -29,39 +47,73 @@ export default function FaceChart(props: FaceChartProps) {
             },
           },
         },
-        dataLabels: {
-          enabled: false,
+        annotations: {
+          yaxis: [
+            {
+              y: 0.5,
+              borderColor: '#00E396',
+              fillColor: '#00E396',
+              label: {
+                borderColor: '#00E396',
+                style: {
+                  color: '#fff',
+                  background: '#00E396',
+                },
+                text: 'yaw over 40°',
+              },
+            },
+            {
+              y: -0.5,
+              borderColor: '#FEB019',
+              fillColor: '#FEB019',
+              label: {
+                borderColor: '#FEB019',
+                style: {
+                  color: '#fff',
+                  background: '#FEB019',
+                },
+                text: 'yaw under -40°',
+              },
+            },
+          ],
         },
         stroke: {
           curve: 'smooth',
         },
-        title: {
-          text: 'Size of turn angles',
-          align: 'center',
+        grid: {
+          show: false,
         },
-        markers: {
-          size: 0,
-        },
-        xaxis: {
-          labels: {
-            show: false,
-          },
-        },
-        yaxis: {
-          min: 0,
-          max: 1,
-          labels: {
-            show: true,
-            formatter: (val: number) => `${Math.round(val * 180)}°`,
-          },
+        tooltip: {
+          enabled: false,
         },
         legend: {
           show: false,
         },
+        xaxis: {
+          type: 'numeric',
+          range: 1000,
+          labels: {
+            show: false,
+          },
+          axisTicks: {
+            show: false,
+          },
+        },
+        yaxis: {
+          min: -1,
+          max: 1,
+          axisTicks: {
+            show: false,
+          },
+          tickAmount: 5,
+          labels: {
+            formatter: (val: number) => `${Math.round(val * 90)}°`,
+          },
+        },
       }}
       series={[
         {
-          name: 'turn',
+          name: 'yaw',
           data: yaws,
         },
       ]}

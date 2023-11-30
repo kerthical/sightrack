@@ -18,7 +18,7 @@ def execute(program_path, *args):
     else:
         program_path = os.path.join(VENV_DIR, "bin", program_path)
 
-    subprocess.run([program_path, *args])
+    subprocess.run([program_path, *args], stderr=subprocess.DEVNULL)
 
 
 def start():

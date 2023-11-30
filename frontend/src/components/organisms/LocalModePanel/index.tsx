@@ -1,6 +1,7 @@
 import { Button, FileButton } from '@mantine/core';
 import { useListState } from '@mantine/hooks';
 import { useEffect, useRef, useState } from 'react';
+import DownloadSeriesButton from '@/components/molecules/DownloadSeriesButton';
 import FaceChart from '@/components/molecules/FaceChart';
 import { Frame } from '@/types/frame.ts';
 
@@ -25,9 +26,10 @@ export default function LocalModePanel() {
         playsInline={true}
         controls={true}
         ref={videoRef}
-        className="min-w-1/2 w-1/2 max-w-1/2"
+        className="min-w-1/3 w-1/3 max-w-1/3"
       />
       <FaceChart series={series} />
+      <DownloadSeriesButton series={series} />
     </>
   ) : (
     <>

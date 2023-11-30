@@ -1,6 +1,6 @@
 import copy
-from math import sin
-from typing import Tuple, Union
+from math import sin, cos
+from typing import Tuple
 import os
 import shutil
 import tarfile
@@ -86,11 +86,11 @@ class ResNetModel:
 
     @staticmethod
     def visualize(
-        image: np.ndarray,
-        box: Tuple[int, int, int, int],
-        yaw: float,
-        pitch: float,
-        roll: float,
+            image: np.ndarray,
+            box: Tuple[int, int, int, int],
+            yaw: float,
+            pitch: float,
+            roll: float,
     ) -> np.ndarray:
         annotated_image: np.ndarray = copy.deepcopy(image)
         size: int = 600
@@ -104,34 +104,16 @@ class ResNetModel:
         pitch: float = pitch * np.pi / 180
         yaw: float = -(yaw * np.pi / 180)
         roll: float = roll * np.pi / 180
-        if tdx is not None and tdy is not None:
-            tdx: float = tdx
-            tdy: float = tdy
-        else:
-            height: int
-            width: int
-            height, width = annotated_image.shape[:2]
-            tdx: float = width / 2
-            tdy: float = height / 2
-        from math import cos
 
         x1: float = size * (cos(yaw) * cos(roll)) + tdx
-        y1: float = (
-            size * (cos(pitch) * sin(roll) + cos(roll) * sin(pitch) * sin(yaw)) + tdy
-        )
+        y1: float = size * (cos(pitch) * sin(roll) + cos(roll) * sin(pitch) * sin(yaw)) + tdy
         x2: float = size * (-cos(yaw) * sin(roll)) + tdx
-        y2: float = (
-            size * (cos(pitch) * cos(roll) - sin(pitch) * sin(yaw) * sin(roll)) + tdy
-        )
+        y2: float = size * (cos(pitch) * cos(roll) - sin(pitch) * sin(yaw) * sin(roll)) + tdy
         x3: float = size * (sin(yaw)) + tdx
         y3: float = size * (-cos(yaw) * sin(pitch)) + tdy
-        cv2.line(
-            annotated_image, (int(tdx), int(tdy)), (int(x1), int(y1)), (0, 0, 255), 2
-        )
-        cv2.line(
-            annotated_image, (int(tdx), int(tdy)), (int(x2), int(y2)), (0, 255, 0), 2
-        )
-        cv2.line(
-            annotated_image, (int(tdx), int(tdy)), (int(x3), int(y3)), (255, 0, 0), 2
-        )
+
+        cv2.line(annotated_image, (int(tdx), int(tdy)), (int(x1), int(y1)), (0, 0, 255), 2)
+        cv2.line(annotated_image, (int(tdx), int(tdy)), (int(x2), int(y2)), (0, 255, 0), 2)
+        cv2.line(annotated_image, (int(tdx), int(tdy)), (int(x3), int(y3)), (255, 0, 0), 2)
+
         return annotated_image

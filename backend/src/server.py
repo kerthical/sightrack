@@ -1,6 +1,8 @@
 import json
+import os
 import tempfile
 import time
+import traceback
 from typing import Optional, Union
 
 from aiohttp import web, MultipartReader
@@ -15,7 +17,7 @@ from av.frame import Frame
 from av.packet import Packet
 from av.video import VideoFrame
 
-from processor import process_frame
+from processor import ImageProcessor
 
 
 class VideoStreamTransformTrack(MediaStreamTrack):
@@ -27,36 +29,56 @@ class VideoStreamTransformTrack(MediaStreamTrack):
         self.channel: RTCDataChannel = channel
         self.last_image: Optional[VideoFrame] = None
         self.start_time: Optional[float] = None
+        self.processor = ImageProcessor()
 
     async def recv(self) -> VideoFrame:
-        frame: Union[Frame, Packet] = await self.track.recv()
+        try:
+            frame: Union[Frame, Packet] = await self.track.recv()
 
-        if self.start_time is None:
-            self.start_time = time.time()
+            if self.start_time is None:
+                self.start_time = time.time()
 
-        if (
+            if (
                 time.time() - self.start_time - frame.pts * frame.time_base * 1.0 >= 0.2
                 and self.last_image is not None
-        ):
-            frame = self.last_image
-            return frame
+            ):
+                frame = self.last_image
+                return frame
 
-        image, detected, yaw, pitch, roll = process_frame(
-            frame.to_ndarray(format="bgr24"), frame.pts
-        )
-        image: VideoFrame = VideoFrame.from_ndarray(image, format="bgr24")
-        image.pts = frame.pts
-        image.time_base = frame.time_base
-        self.last_image = image
+            (
+                image,
+                detected,
+                yaw,
+                pitch,
+                roll,
+                gaze_x,
+                gaze_y,
+            ) = self.processor.process_frame(frame.to_ndarray(format="bgr24"))
+            image: VideoFrame = VideoFrame.from_ndarray(image, format="bgr24")
+            image.pts = frame.pts
+            image.time_base = frame.time_base
+            self.last_image = image
 
-        if self.channel.readyState == "open":
-            self.channel.send(
-                json.dumps(
-                    {"detected": detected, "yaw": yaw, "pitch": pitch, "roll": roll, "frame_count": frame.pts}
+            if self.channel.readyState == "open":
+                self.channel.send(
+                    json.dumps(
+                        {
+                            "detected": detected,
+                            "yaw": yaw,
+                            "pitch": pitch,
+                            "roll": roll,
+                            "gaze_x": gaze_x,
+                            "gaze_y": gaze_y,
+                            "frame_count": frame.pts,
+                        }
+                    )
                 )
-            )
 
-        return image
+            return image
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
+            pass
 
 
 async def handle_index(_) -> web.FileResponse:
@@ -104,9 +126,7 @@ async def handle_local(request: web.Request) -> web.Response:
             break
         if part.name == "file":
             file_name = part.filename
-            temp_file = tempfile.NamedTemporaryFile(
-                delete=False, suffix=file_name
-            )
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=file_name)
             while True:
                 chunk = await part.read_chunk()
                 if not chunk:
