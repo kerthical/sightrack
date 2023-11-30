@@ -28,7 +28,10 @@ class ImageProcessor:
 
     @staticmethod
     def estimate_gaze_point(
-            image: np.array, yaw: float, pitch: float, head_box: Tuple[float, float, float, float]
+        image: np.array,
+        yaw: float,
+        pitch: float,
+        head_box: Tuple[float, float, float, float],
     ) -> Tuple[int, int]:
         width = image.shape[1]
         height = image.shape[0]
@@ -42,7 +45,6 @@ class ImageProcessor:
         gaze_y = np.clip(gaze_y, 0, height)
 
         return int(gaze_x), int(gaze_y)
-
 
     @staticmethod
     def apply_heatmap(
@@ -117,4 +119,14 @@ class ImageProcessor:
             self.prev_gaze_x = gaze_x
             self.prev_gaze_y = gaze_y
 
-        return image, len(boxes) > 0, yaw, pitch, 0, gaze_x, gaze_y, largest_box, largest_score
+        return (
+            image,
+            len(boxes) > 0,
+            yaw,
+            pitch,
+            0,
+            gaze_x,
+            gaze_y,
+            largest_box,
+            largest_score,
+        )

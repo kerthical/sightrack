@@ -75,8 +75,12 @@ class VideoStreamTransformTrack(MediaStreamTrack):
                                 "y1": largest_box[1].item(),
                                 "x2": largest_box[2].item(),
                                 "y2": largest_box[3].item(),
-                            } if largest_box is not None else None,
-                            "score": largest_score if largest_score is not None else None,
+                            }
+                            if largest_box is not None
+                            else None,
+                            "score": largest_score
+                            if largest_score is not None
+                            else None,
                         }
                     )
                 )

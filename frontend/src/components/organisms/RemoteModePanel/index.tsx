@@ -80,6 +80,7 @@ export default function RemoteModePanel() {
     return () => {
       pc.close();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return currentStatus === 'done' ? (
