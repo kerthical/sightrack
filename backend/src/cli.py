@@ -14,9 +14,21 @@ def process_image(args: argparse.Namespace) -> None:
     print(f"    - output: {args.output}")
     print()
 
-    from processor import process_frame
+    from processor import ImageProcessor
 
-    image, detected, yaw, pitch, roll = process_frame(image)
+    processor = ImageProcessor()
+
+    (
+        image,
+        detected,
+        yaw,
+        pitch,
+        roll,
+        gaze_x,
+        gaze_y,
+        box,
+        score,
+    ) = processor.process_frame(image)
 
     print("[*] Result:")
     print(f"    - detected: {detected}")
@@ -60,7 +72,9 @@ def process_video(args: argparse.Namespace) -> None:
     print(f"    - output: {args.output}")
     print()
 
-    from processor import process_frame
+    from processor import ImageProcessor
+
+    processor = ImageProcessor()
 
     frame_count: int = 0
 
@@ -75,7 +89,17 @@ def process_video(args: argparse.Namespace) -> None:
             ret, frame = capture.read()
             if not ret:
                 break
-            image, detected, yaw, pitch, roll = process_frame(frame)
+            (
+                image,
+                detected,
+                yaw,
+                pitch,
+                roll,
+                gaze_x,
+                gaze_y,
+                box,
+                score,
+            ) = processor.process_frame(frame)
             output.write(image)
             frame_count += 1
             print(
@@ -90,7 +114,17 @@ def process_video(args: argparse.Namespace) -> None:
                 ret, frame = capture.read()
                 if not ret:
                     break
-                image, detected, yaw, pitch, roll = process_frame(frame)
+                (
+                    image,
+                    detected,
+                    yaw,
+                    pitch,
+                    roll,
+                    gaze_x,
+                    gaze_y,
+                    box,
+                    score,
+                ) = processor.process_frame(frame)
                 f.write(f"{frame_count},{detected},{yaw},{pitch},{roll}\n")
                 frame_count += 1
                 print(
