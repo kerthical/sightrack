@@ -3,7 +3,12 @@ import tempfile
 import time
 
 from aiohttp import web
-from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription, RTCDataChannel
+from aiortc import (
+    MediaStreamTrack,
+    RTCPeerConnection,
+    RTCSessionDescription,
+    RTCDataChannel,
+)
 from aiortc.contrib.media import MediaPlayer
 from av.video import VideoFrame
 
@@ -25,7 +30,10 @@ class VideoStreamTransformTrack(MediaStreamTrack):
         frame = await self.track.recv()
         if self.start_time is None:
             self.start_time = time.time()
-        if time.time() - self.start_time - frame.pts * frame.time_base >= 0.2 and self.last_image is not None:
+        if (
+            time.time() - self.start_time - frame.pts * frame.time_base >= 0.2
+            and self.last_image is not None
+        ):
             return self.last_image
         result = self.processor.process_frame(frame.to_ndarray(format="bgr24"))
         image = VideoFrame.from_ndarray(result.image, format="bgr24")
@@ -42,13 +50,37 @@ async def handle_index(_) -> web.FileResponse:
 
 
 async def handle_request(request: web.Request, local: bool = False) -> web.Response:
-    params = await request.json() if not local else json.loads((await request.multipart().next()).read(decode=False).decode("utf-8"))
+    params = (
+        await request.json()
+        if not local
+        else json.loads(
+            (await request.multipart().next()).read(decode=False).decode("utf-8")
+        )
+    )
     pc = RTCPeerConnection()
     channel = pc.createDataChannel("data")
-    pc.addTrack(VideoStreamTransformTrack(MediaPlayer(tempfile.NamedTemporaryFile(delete=False, suffix=(await request.multipart().next()).filename).name).video if local else (await request.json())["track"], channel))
-    await pc.setRemoteDescription(RTCSessionDescription(sdp=params["sdp"], type=params["type"]))
+    pc.addTrack(
+        VideoStreamTransformTrack(
+            MediaPlayer(
+                tempfile.NamedTemporaryFile(
+                    delete=False, suffix=(await request.multipart().next()).filename
+                ).name
+            ).video
+            if local
+            else (await request.json())["track"],
+            channel,
+        )
+    )
+    await pc.setRemoteDescription(
+        RTCSessionDescription(sdp=params["sdp"], type=params["type"])
+    )
     await pc.setLocalDescription(await pc.createAnswer())
-    return web.Response(content_type="application/json", text=json.dumps({"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}))
+    return web.Response(
+        content_type="application/json",
+        text=json.dumps(
+            {"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}
+        ),
+    )
 
 
 if __name__ == "__main__":

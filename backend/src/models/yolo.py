@@ -31,9 +31,9 @@ class YOLOModel:
         self.onnx_session: onnxruntime.InferenceSession = onnxruntime.InferenceSession(
             model_path,
             providers=[
-                'CUDAExecutionProvider',
-                'CPUExecutionProvider',
-            ]
+                "CUDAExecutionProvider",
+                "CPUExecutionProvider",
+            ],
         )
         self.input_shapes: List[Tuple[int, int, int, int]] = [
             input.shape for input in self.onnx_session.get_inputs()

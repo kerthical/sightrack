@@ -39,7 +39,9 @@ def process_file(args: argparse.Namespace) -> None:
                 ret, frame = capture.read()
                 if not ret:
                     break
-                image, detected, yaw, pitch, roll, _, _, _, _ = processor.process_frame(frame)
+                image, detected, yaw, pitch, roll, _, _, _, _ = processor.process_frame(
+                    frame
+                )
                 output.write(image)
                 frame_count += 1
         elif args.output.split(".")[-1] in ["csv"]:
@@ -49,7 +51,17 @@ def process_file(args: argparse.Namespace) -> None:
                     ret, frame = capture.read()
                     if not ret:
                         break
-                    image, detected, yaw, pitch, roll, _, _, _, _ = processor.process_frame(frame)
+                    (
+                        image,
+                        detected,
+                        yaw,
+                        pitch,
+                        roll,
+                        _,
+                        _,
+                        _,
+                        _,
+                    ) = processor.process_frame(frame)
                     f.write(f"{frame_count},{detected},{yaw},{pitch},{roll}\n")
                     frame_count += 1
         else:
