@@ -29,7 +29,11 @@ class YOLOModel:
             shutil.rmtree(model_path + "_tmp/")
 
         self.onnx_session: onnxruntime.InferenceSession = onnxruntime.InferenceSession(
-            model_path
+            model_path,
+            providers=[
+                'CUDAExecutionProvider',
+                'CPUExecutionProvider',
+            ]
         )
         self.input_shapes: List[Tuple[int, int, int, int]] = [
             input.shape for input in self.onnx_session.get_inputs()

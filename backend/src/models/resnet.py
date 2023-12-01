@@ -30,7 +30,10 @@ class ResNetModel:
             os.remove(model_path + ".tar.gz")
             shutil.rmtree(model_path + "_tmp/")
 
-        self.onnx_session = onnxruntime.InferenceSession(model_path)
+        self.onnx_session = onnxruntime.InferenceSession(model_path, providers=[
+            'CUDAExecutionProvider',
+            'CPUExecutionProvider',
+        ])
 
     def infer(
         self, image: np.ndarray, box: Tuple[int, int, int, int], score: float
