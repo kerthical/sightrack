@@ -19,24 +19,30 @@ class BoundingBox:
         return np.array([self.x1, self.y1, self.x2, self.y2])
 
 
-def find_max_confidence_box_and_score(boxes: List[BoundingBox], scores: np.ndarray) -> Optional[Tuple[BoundingBox, float]]:
+def find_max_confidence_box_and_score(
+    boxes: List[BoundingBox], scores: np.ndarray
+) -> Optional[Tuple[BoundingBox, float]]:
     boxes_array = np.array([box.to_array() for box in boxes])
-    confidences = (boxes_array[:, 2] - boxes_array[:, 0]) * (boxes_array[:, 3] - boxes_array[:, 1]) * scores
+    confidences = (
+        (boxes_array[:, 2] - boxes_array[:, 0])
+        * (boxes_array[:, 3] - boxes_array[:, 1])
+        * scores
+    )
     max_confidence_index = np.argmax(confidences)
     return boxes[max_confidence_index], scores[max_confidence_index].item()
 
 
 def smooth_value(
-        current_value: float, previous_value: float, smoothing_factor: float = 0.3
+    current_value: float, previous_value: float, smoothing_factor: float = 0.3
 ) -> float:
     return smoothing_factor * current_value + (1 - smoothing_factor) * previous_value
 
 
 def estimate_gaze_point(
-        image: np.array,
-        yaw: float,
-        pitch: float,
-        head_box: Tuple[float, float, float, float],
+    image: np.array,
+    yaw: float,
+    pitch: float,
+    head_box: Tuple[float, float, float, float],
 ) -> Tuple[int, int]:
     return 0, 0
 

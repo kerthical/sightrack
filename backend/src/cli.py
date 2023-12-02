@@ -25,7 +25,9 @@ def process_file(input: str, output: str):
             print("[+] Image file processed and saved")
         elif output.split(".")[-1] in ["csv"]:
             with open(output, "w") as f:
-                f.write(f"detected,yaw,pitch,roll,gaze_x,gaze_y,score\n{result.detected},{result.yaw},{result.pitch},{result.roll},{result.gaze_x},{result.gaze_y},{result.score}\n")
+                f.write(
+                    f"detected,yaw,pitch,roll,gaze_x,gaze_y,score\n{result.detected},{result.yaw},{result.pitch},{result.roll},{result.gaze_x},{result.gaze_y},{result.score}\n"
+                )
             print("[+] Image file processed and data saved to csv")
         else:
             print("[!] Unsupported output file format")
@@ -41,7 +43,9 @@ def process_file(input: str, output: str):
         width: int = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
         height: int = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
         total_frames: int = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-        print(f"[+] Video file opened with {fps} fps, {width}x{height} resolution and {total_frames} frames")
+        print(
+            f"[+] Video file opened with {fps} fps, {width}x{height} resolution and {total_frames} frames"
+        )
 
         frame_count: int = 0
 
@@ -65,7 +69,9 @@ def process_file(input: str, output: str):
                     if not ret:
                         break
                     result = processor.process_frame(frame)
-                    f.write(f"{frame_count},{result.detected},{result.yaw},{result.pitch},{result.roll},{result.gaze_x},{result.gaze_y},{result.score}\n")
+                    f.write(
+                        f"{frame_count},{result.detected},{result.yaw},{result.pitch},{result.roll},{result.gaze_x},{result.gaze_y},{result.score}\n"
+                    )
                     frame_count += 1
             print("[+] Video file processed and data saved to csv")
         else:
