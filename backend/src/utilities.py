@@ -1,27 +1,42 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
+
 import cv2
 import numpy as np
 
 
-def find_max_confidence_box_and_score(
-    boxes: np.ndarray, scores: np.ndarray
-) -> Tuple[Optional[np.array], Optional[float]]:
-    confidences = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1]) * scores
+class BoundingBox:
+    def __init__(self, x1: float, y1: float, x2: float, y2: float):
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x2
+        self.y2 = y2
+
+    @classmethod
+    def from_array(cls, arr: np.ndarray):
+        return cls(*arr)
+
+    def to_array(self) -> np.ndarray:
+        return np.array([self.x1, self.y1, self.x2, self.y2])
+
+
+def find_max_confidence_box_and_score(boxes: List[BoundingBox], scores: np.ndarray) -> Optional[Tuple[BoundingBox, float]]:
+    boxes_array = np.array([box.to_array() for box in boxes])
+    confidences = (boxes_array[:, 2] - boxes_array[:, 0]) * (boxes_array[:, 3] - boxes_array[:, 1]) * scores
     max_confidence_index = np.argmax(confidences)
     return boxes[max_confidence_index], scores[max_confidence_index].item()
 
 
 def smooth_value(
-    current_value: float, previous_value: float, smoothing_factor: float = 0.3
+        current_value: float, previous_value: float, smoothing_factor: float = 0.3
 ) -> float:
     return smoothing_factor * current_value + (1 - smoothing_factor) * previous_value
 
 
 def estimate_gaze_point(
-    image: np.array,
-    yaw: float,
-    pitch: float,
-    head_box: Tuple[float, float, float, float],
+        image: np.array,
+        yaw: float,
+        pitch: float,
+        head_box: Tuple[float, float, float, float],
 ) -> Tuple[int, int]:
     return 0, 0
 

@@ -32,8 +32,8 @@ class ImageProcessorResult:
         self.roll = roll
         self.gaze_x = gaze_x
         self.gaze_y = gaze_y
-        self.largest_box = largest_box
-        self.largest_score = largest_score
+        self.bbox = largest_box
+        self.score = largest_score
 
 
 class ImageProcessor:
