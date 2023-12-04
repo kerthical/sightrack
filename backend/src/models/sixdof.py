@@ -1,6 +1,7 @@
 import os
 import shutil
 import tarfile
+from math import cos, sin
 from typing import Optional, Tuple
 from urllib import request
 
@@ -127,4 +128,44 @@ class SixDOFModel:
 
     @staticmethod
     def visualize(input_image: np.ndarray, result: SixDOFModelResult) -> np.ndarray:
-        return input_image
+        image = np.copy(input_image)
+        x1: int = result.bbox[0]
+        y1: int = result.bbox[1]
+        x2: int = result.bbox[2]
+        y2: int = result.bbox[3]
+        tdx: float = float((x1 + x2) // 2)
+        tdy: float = float((y1 + y2) // 2)
+        pitch: float = result.pitch * np.pi / 180
+        yaw: float = -(result.yaw * np.pi / 180)
+        roll: float = result.roll * np.pi / 180
+        size: int = 600
+        x1: float = size * (cos(yaw) * cos(roll)) + tdx
+        y1: float = size * (cos(pitch) * sin(roll) + cos(roll) * sin(pitch) * sin(yaw)) + tdy
+        x2: float = size * (-cos(yaw) * sin(roll)) + tdx
+        y2: float = size * (cos(pitch) * cos(roll) - sin(pitch) * sin(yaw) * sin(roll)) + tdy
+        x3: float = size * (sin(yaw)) + tdx
+        y3: float = size * (-cos(yaw) * sin(pitch)) + tdy
+        face_width = result.bbox[2] - result.bbox[0]
+        face_height = result.bbox[3] - result.bbox[1]
+        face_size = (face_width + face_height) / 2
+        face_center = ((result.bbox[0] + result.bbox[2]) / 2, (result.bbox[1] + result.bbox[3]) / 2)
+        camera_distance = 0.5 * 360 / np.tan(face_size / 2)
+        gaze_direction = np.array([np.cos(result.yaw) * np.cos(result.pitch), np.sin(result.yaw) * np.cos(result.pitch), np.sin(result.pitch)])
+        gaze_point = np.array(face_center) + camera_distance * gaze_direction
+        gaze_point[0] = np.clip(gaze_point[0], 0, input_image.shape[1] - 1)
+        gaze_point[1] = np.clip(gaze_point[1], 0, input_image.shape[0] - 1)
+        heatmap = np.zeros((input_image.shape[0], input_image.shape[1]), dtype=np.float32)
+        cv2.circle(heatmap, (int(gaze_point[0]), int(gaze_point[1])), int(face_size), (1,), -1)
+        heatmap_color = cv2.applyColorMap((heatmap * 255).astype(np.uint8), cv2.COLORMAP_JET)
+
+        image = cv2.rectangle(image, (result.bbox[0], result.bbox[1]), (result.bbox[2], result.bbox[3]), (0, 0, 255), 2)
+        image = cv2.putText(image, "score: %.2f" % result.score, (result.bbox[0], result.bbox[3] + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+        image = cv2.putText(image, "yaw: %.2f" % result.yaw, (result.bbox[0], result.bbox[3] + 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+        image = cv2.putText(image, "pitch: %.2f" % result.pitch, (result.bbox[0], result.bbox[3] + 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+        image = cv2.putText(image, "roll: %.2f" % result.roll, (result.bbox[0], result.bbox[3] + 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+        image = cv2.line(image, (int(tdx), int(tdy)), (int(x1), int(y1)), (255, 0, 0), 3)
+        image = cv2.line(image, (int(tdx), int(tdy)), (int(x2), int(y2)), (0, 255, 0), 3)
+        image = cv2.line(image, (int(tdx), int(tdy)), (int(x3), int(y3)), (0, 0, 255), 3)
+        image = cv2.addWeighted(image, 0.7, heatmap_color, 0.3, 0)
+
+        return image

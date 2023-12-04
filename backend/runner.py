@@ -43,6 +43,7 @@ def prepare():
         "flake8",
         "aiohttp",
         "opencv-python",
+        "scipy"
     ]
 
     if OS == "Windows" or OS == "Linux":
