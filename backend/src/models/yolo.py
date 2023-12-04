@@ -1,3 +1,4 @@
+import copy
 import os
 import shutil
 import tarfile
@@ -9,6 +10,12 @@ import numpy as np
 import onnxruntime
 
 YOLO_MODEL_URL: str = "https://s3.ap-northeast-2.wasabisys.com/pinto-model-zoo/423_6DRepNet360/resources.tar.gz"
+
+
+class YOLOModelResult:
+    def __init__(self, box: list[int], score: float):
+        self.bbox = box
+        self.score = score
 
 
 class YOLOModel:
@@ -45,7 +52,7 @@ class YOLOModel:
             output.name for output in self.onnx_session.get_outputs()
         ]
 
-    def infer(self, image: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def infer(self, image: np.ndarray) -> list[YOLOModelResult]:
         temp_image: np.ndarray = np.copy(image)
         swap: Tuple[int, int, int] = (2, 0, 1)
         image1: np.ndarray = cv2.resize(
@@ -107,4 +114,28 @@ class YOLOModel:
         )
         result_boxes, result_scores = result
 
-        return result_boxes, result_scores
+        return [
+            YOLOModelResult(box, score)
+            for box, score in zip(result_boxes, result_scores)
+        ]
+
+    @staticmethod
+    def visualize(
+        image: np.ndarray,
+        box: YOLOModelResult,
+    ) -> np.ndarray:
+        annotated_image: np.ndarray = copy.deepcopy(image)
+        x1: int = box.bbox[0]
+        y1: int = box.bbox[1]
+        x2: int = box.bbox[2]
+        y2: int = box.bbox[3]
+
+        cv2.rectangle(
+            annotated_image,
+            (x1, y1),
+            (x2, y2),
+            (0, 255, 0),
+            2,
+        )
+
+        return annotated_image

@@ -8,17 +8,18 @@ VENV_DIR = ".venv"
 OS = platform.system()
 
 
-def execute(program_path, *args):
+def execute(program, *args):
     if not os.path.exists(VENV_DIR):
         venv.create(VENV_DIR, with_pip=True, upgrade_deps=True)
         prepare()
 
     if OS == "Windows":
-        program_path = os.path.join(VENV_DIR, "Scripts", program_path + ".exe")
+        program = os.path.join(VENV_DIR, "Scripts", program + ".exe")
     else:
-        program_path = os.path.join(VENV_DIR, "bin", program_path)
+        program = os.path.join(VENV_DIR, "bin", program)
 
-    subprocess.run([program_path, *args], stderr=subprocess.DEVNULL)
+    result = subprocess.run([program, *args], stderr=subprocess.DEVNULL)
+    exit(result.returncode)
 
 
 def start():
@@ -35,7 +36,14 @@ def lint():
 
 
 def prepare():
-    dependencies = ["mediapipe", "aiortc", "black", "flake8", "aiohttp", "opencv-python"]
+    dependencies = [
+        "mediapipe",
+        "aiortc",
+        "black",
+        "flake8",
+        "aiohttp",
+        "opencv-python",
+    ]
 
     if OS == "Windows" or OS == "Linux":
         dependencies.append("onnxruntime-gpu")

@@ -1,16 +1,24 @@
 import copy
-from math import sin, cos
-from typing import Tuple
 import os
 import shutil
 import tarfile
 import urllib.request
+from math import sin, cos
 
 import cv2
 import numpy as np
 import onnxruntime
 
+from .yolo import YOLOModelResult
+
 RESNET_MODEL_URL: str = "https://s3.ap-northeast-2.wasabisys.com/pinto-model-zoo/423_6DRepNet360/resources.tar.gz"
+
+
+class ResNetModelResult:
+    def __init__(self, yaw: float, pitch: float, roll: float):
+        self.yaw = yaw
+        self.pitch = pitch
+        self.roll = roll
 
 
 class ResNetModel:
@@ -38,21 +46,20 @@ class ResNetModel:
             ],
         )
 
-    def infer(
-        self, image: np.ndarray, box: Tuple[int, int, int, int], score: float
-    ) -> Tuple[float, float, float]:
+    def infer(self, image: np.ndarray, result: YOLOModelResult) -> ResNetModelResult:
         mean: np.ndarray = np.asarray([0.485, 0.456, 0.406], dtype=np.float32)
         std: np.ndarray = np.asarray([0.229, 0.224, 0.225], dtype=np.float32)
+        box = result.bbox
 
         debug_image: np.ndarray = copy.deepcopy(image)
 
         image_height: int = debug_image.shape[0]
         image_width: int = debug_image.shape[1]
 
-        x1: int = box[0]
-        y1: int = box[1]
-        x2: int = box[2]
-        y2: int = box[3]
+        x1: int = int(box[0])
+        y1: int = int(box[1])
+        x2: int = int(box[2])
+        y2: int = int(box[3])
 
         cx: int = (x1 + x2) // 2
         cy: int = (y1 + y2) // 2
@@ -88,28 +95,26 @@ class ResNetModel:
         pitch_deg: float = yaw_pitch_roll[0][1].item()
         roll_deg: float = yaw_pitch_roll[0][2].item()
 
-        return yaw_deg, pitch_deg, roll_deg
+        return ResNetModelResult(yaw_deg, pitch_deg, roll_deg)
 
     @staticmethod
     def visualize(
         image: np.ndarray,
-        box: Tuple[int, int, int, int],
-        yaw: float,
-        pitch: float,
-        roll: float,
+        box: YOLOModelResult,
+        rotation: ResNetModelResult,
     ) -> np.ndarray:
         annotated_image: np.ndarray = copy.deepcopy(image)
         size: int = 600
-        x1: int = box[0]
-        y1: int = box[1]
-        x2: int = box[2]
-        y2: int = box[3]
+        x1: int = box.bbox[0]
+        y1: int = box.bbox[1]
+        x2: int = box.bbox[2]
+        y2: int = box.bbox[3]
         tdx: float = float((x1 + x2) // 2)
         tdy: float = float((y1 + y2) // 2)
 
-        pitch: float = pitch * np.pi / 180
-        yaw: float = -(yaw * np.pi / 180)
-        roll: float = roll * np.pi / 180
+        pitch: float = rotation.pitch * np.pi / 180
+        yaw: float = -(rotation.yaw * np.pi / 180)
+        roll: float = rotation.roll * np.pi / 180
 
         x1: float = size * (cos(yaw) * cos(roll)) + tdx
         y1: float = (

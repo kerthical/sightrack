@@ -12,13 +12,12 @@ export default function DownloadSeriesButton(props: DownloadSeriesButtonProps) {
         const csvContent = props.series
           .map(frame => {
             const row = [
-              frame.frame_count,
+              frame.frame,
               frame.detected,
-              frame.yaw,
-              frame.pitch,
-              frame.roll,
-              frame.gaze_x,
-              frame.gaze_y,
+              frame.box?.score,
+              frame.rotation?.yaw,
+              frame.rotation?.pitch,
+              frame.rotation?.roll,
             ];
             return row.join(',');
           })
@@ -26,11 +25,10 @@ export default function DownloadSeriesButton(props: DownloadSeriesButtonProps) {
         const headers = [
           'frame_count',
           'detected',
+          'score',
           'yaw',
           'pitch',
           'roll',
-          'gaze_x',
-          'gaze_y',
         ];
         const headerRow = headers.join(',');
         const csv = headerRow + '\n' + csvContent;

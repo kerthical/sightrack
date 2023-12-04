@@ -1,35 +1,27 @@
-from typing import Tuple, Optional, List
+from typing import Tuple, Optional
 
 import cv2
 import numpy as np
 
-
-class BoundingBox:
-    def __init__(self, x1: float, y1: float, x2: float, y2: float):
-        self.x1 = x1
-        self.y1 = y1
-        self.x2 = x2
-        self.y2 = y2
-
-    @classmethod
-    def from_array(cls, arr: np.ndarray):
-        return cls(*arr)
-
-    def to_array(self) -> np.ndarray:
-        return np.array([self.x1, self.y1, self.x2, self.y2])
+from models.resnet import ResNetModelResult
+from models.yolo import YOLOModelResult
 
 
-def find_max_confidence_box_and_score(
-    boxes: List[BoundingBox], scores: np.ndarray
-) -> Optional[Tuple[BoundingBox, float]]:
-    boxes_array = np.array([box.to_array() for box in boxes])
-    confidences = (
-        (boxes_array[:, 2] - boxes_array[:, 0])
-        * (boxes_array[:, 3] - boxes_array[:, 1])
-        * scores
+def find_max_confidence_result(
+    result: list[YOLOModelResult],
+) -> Optional[YOLOModelResult]:
+    if not result:
+        return None
+    max_confidence = max((box.bbox[2] - box.bbox[0]) * box.score for box in result)
+    result = next(
+        (
+            box
+            for box in result
+            if (box.bbox[2] - box.bbox[0]) * box.score == max_confidence
+        ),
+        None,
     )
-    max_confidence_index = np.argmax(confidences)
-    return boxes[max_confidence_index], scores[max_confidence_index].item()
+    return YOLOModelResult(result.bbox, result.score) if result else None
 
 
 def smooth_value(
@@ -40,9 +32,8 @@ def smooth_value(
 
 def estimate_gaze_point(
     image: np.array,
-    yaw: float,
-    pitch: float,
-    head_box: Tuple[float, float, float, float],
+    box: YOLOModelResult,
+    rotation: ResNetModelResult,
 ) -> Tuple[int, int]:
     return 0, 0
 
@@ -54,7 +45,5 @@ def apply_heatmap(image: np.array, gaze_x: int, gaze_y: int, radius: int) -> np.
     heatmap = np.clip(heatmap / np.max(heatmap) * 255, 0, 255).astype(np.uint8)
     colored_heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
     colored_heatmap = np.dstack((colored_heatmap, np.where(heatmap == 0, 0, 255)))
-    overlay = cv2.addWeighted(
-        cv2.cvtColor(image, cv2.COLOR_BGR2BGRA), 1.0, colored_heatmap, 0.5, 0
-    )
-    return cv2.cvtColor(overlay, cv2.COLOR_BGRA2BGR) if image.shape[2] == 3 else overlay
+    overlay = cv2.addWeighted(image, 0.5, colored_heatmap, 0.5, 0)
+    return overlay
