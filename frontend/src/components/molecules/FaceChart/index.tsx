@@ -10,7 +10,7 @@ export default function FaceChart(props: FaceChartProps) {
   const { width } = useViewportSize();
   const detectedYaws = props.series
     .filter(frame => frame.detected)
-    .map(frame => frame.rotation!.yaw / 90);
+    .map(frame => frame.result.yaw / 90);
   const sortedYaws = [...detectedYaws].sort((a, b) => a - b);
   const middle = Math.floor(sortedYaws.length / 2);
   let median: number;
@@ -21,7 +21,7 @@ export default function FaceChart(props: FaceChartProps) {
   }
 
   const yaws = props.series.map(frame =>
-    frame.detected ? frame.rotation!.yaw / 90 - median : null,
+    frame.detected ? frame.result.yaw / 90 - median : null,
   );
 
   return (

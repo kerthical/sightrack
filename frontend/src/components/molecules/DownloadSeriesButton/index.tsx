@@ -14,10 +14,10 @@ export default function DownloadSeriesButton(props: DownloadSeriesButtonProps) {
             const row = [
               frame.frame,
               frame.detected,
-              frame.box?.score,
-              frame.rotation?.yaw,
-              frame.rotation?.pitch,
-              frame.rotation?.roll,
+              frame.result.score,
+              frame.result.yaw,
+              frame.result.pitch,
+              frame.result.roll,
             ];
             return row.join(',');
           })

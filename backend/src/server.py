@@ -57,15 +57,7 @@ class VideoStreamTransformTrack(MediaStreamTrack):
                         {
                             "detected": result.detected,
                             "frame": frame.pts * frame.time_base * 1.0,
-                            "box": {
-                                "bbox": result.box.bbox,
-                                "score": result.box.score,
-                            } if result.box else None,
-                            "rotation": {
-                                "yaw": result.rotation.yaw,
-                                "pitch": result.rotation.pitch,
-                                "roll": result.rotation.roll,
-                            } if result.rotation else None,
+                            "result": result.result.to_dict()
                         }
                     )
                 )

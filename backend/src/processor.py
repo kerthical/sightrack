@@ -1,68 +1,47 @@
-from typing import Optional
-
 import numpy as np
 
-from models.resnet import ResNetModel, ResNetModelResult
-from models.yolo import YOLOModel, YOLOModelResult
-from utilities import (
-    find_max_confidence_result,
-    smooth_value,
-)
+from models.sixdof import SixDOFModel, SixDOFModelResult
+from utilities import smooth_value
 
 
 class ImageProcessorResult:
-    def __init__(
-        self,
-        image: np.array,
-        box: YOLOModelResult,
-        rotation: ResNetModelResult,
-    ):
+    def __init__(self, image: np.ndarray, detected: bool, result: SixDOFModelResult):
         self.image = image
-        self.detected = bool(box)
-        self.box = box
-        self.rotation = rotation
+        self.detected = detected
+        self.result = result
 
 
 class ImageProcessor:
     def __init__(self):
-        self.yolo_model = YOLOModel("./models/yolo.model")
-        self.resnet_model = ResNetModel("./models/resnet.model")
+        self.sixdof_model = SixDOFModel()
         self.prev_values = {
-            "box": {
-                "bbox": [0, 0, 0, 0],
-                "score": 0.0,
-            },
-            "rotation": {
-                "yaw": 0.0,
-                "pitch": 0.0,
-                "roll": 0.0,
-            },
+            "bbox": [0, 0, 0, 0],
+            "score": 0.0,
+            "yaw": 0.0,
+            "pitch": 0.0,
+            "roll": 0.0,
         }
 
     def process_frame(self, image: np.array) -> ImageProcessorResult:
-        boxes = self.yolo_model.infer(image)
-        box = find_max_confidence_result(boxes) if len(boxes) else None
-        rotation = (self.resnet_model.infer(image, box) if box else None)
+        raw_result = self.sixdof_model.infer(image)
 
-        if box:
-            self.prev_values["box"]["bbox"][0] = int(smooth_value(self.prev_values["box"]["bbox"][0], box.bbox[0]))
-            self.prev_values["box"]["bbox"][1] = int(smooth_value(self.prev_values["box"]["bbox"][1], box.bbox[1]))
-            self.prev_values["box"]["bbox"][2] = int(smooth_value(self.prev_values["box"]["bbox"][2], box.bbox[2]))
-            self.prev_values["box"]["bbox"][3] = int(smooth_value(self.prev_values["box"]["bbox"][3], box.bbox[3]))
-            self.prev_values["box"]["score"] = smooth_value(self.prev_values["box"]["score"], box.score)
+        if raw_result:
+            self.prev_values["bbox"][0] = int(smooth_value(self.prev_values["bbox"][0], raw_result.bbox[0]))
+            self.prev_values["bbox"][1] = int(smooth_value(self.prev_values["bbox"][1], raw_result.bbox[1]))
+            self.prev_values["bbox"][2] = int(smooth_value(self.prev_values["bbox"][2], raw_result.bbox[2]))
+            self.prev_values["bbox"][3] = int(smooth_value(self.prev_values["bbox"][3], raw_result.bbox[3]))
+            self.prev_values["score"] = smooth_value(self.prev_values["score"], raw_result.score)
+            self.prev_values["yaw"] = smooth_value(self.prev_values["yaw"], raw_result.yaw)
+            self.prev_values["pitch"] = smooth_value(self.prev_values["pitch"], raw_result.pitch)
+            self.prev_values["roll"] = smooth_value(self.prev_values["roll"], raw_result.roll)
 
-            self.prev_values["rotation"]["yaw"] = smooth_value(self.prev_values["rotation"]["yaw"], rotation.yaw)
-            self.prev_values["rotation"]["pitch"] = smooth_value(self.prev_values["rotation"]["pitch"], rotation.pitch)
-            self.prev_values["rotation"]["roll"] = smooth_value(self.prev_values["rotation"]["roll"], rotation.roll)
-
-            image = YOLOModel.visualize(image, box)
-            image = ResNetModel.visualize(image, box, rotation)
-
-        box = YOLOModelResult(self.prev_values["box"]["bbox"], self.prev_values["box"]["score"])
-        rotation = ResNetModelResult(self.prev_values["rotation"]["yaw"], self.prev_values["rotation"]["pitch"], self.prev_values["rotation"]["roll"])
-
-        return ImageProcessorResult(
-            image=image,
-            box=box,
-            rotation=rotation,
+        result = SixDOFModelResult(
+            bbox=self.prev_values["bbox"],
+            score=self.prev_values["score"],
+            yaw=self.prev_values["yaw"],
+            pitch=self.prev_values["pitch"],
+            roll=self.prev_values["roll"],
         )
+        image = SixDOFModel.visualize(image, result)
+
+        return ImageProcessorResult(image, bool(raw_result), result)

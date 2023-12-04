@@ -3,25 +3,7 @@ from typing import Tuple, Optional
 import cv2
 import numpy as np
 
-from models.resnet import ResNetModelResult
-from models.yolo import YOLOModelResult
-
-
-def find_max_confidence_result(
-    result: list[YOLOModelResult],
-) -> Optional[YOLOModelResult]:
-    if not result:
-        return None
-    max_confidence = max((box.bbox[2] - box.bbox[0]) * box.score for box in result)
-    result = next(
-        (
-            box
-            for box in result
-            if (box.bbox[2] - box.bbox[0]) * box.score == max_confidence
-        ),
-        None,
-    )
-    return YOLOModelResult(result.bbox, result.score) if result else None
+from models.sixdof import SixDOFModelResult
 
 
 def smooth_value(
@@ -32,8 +14,7 @@ def smooth_value(
 
 def estimate_gaze_point(
     image: np.array,
-    box: YOLOModelResult,
-    rotation: ResNetModelResult,
+    result: SixDOFModelResult,
 ) -> Tuple[int, int]:
     return 0, 0
 
