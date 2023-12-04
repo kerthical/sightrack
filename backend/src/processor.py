@@ -14,8 +14,8 @@ class ImageProcessorResult:
     def __init__(
         self,
         image: np.array,
-        box: Optional[YOLOModelResult],
-        rotation: Optional[ResNetModelResult],
+        box: YOLOModelResult,
+        rotation: ResNetModelResult,
     ):
         self.image = image
         self.detected = bool(box)
@@ -55,10 +55,11 @@ class ImageProcessor:
             self.prev_values["rotation"]["pitch"] = smooth_value(self.prev_values["rotation"]["pitch"], rotation.pitch)
             self.prev_values["rotation"]["roll"] = smooth_value(self.prev_values["rotation"]["roll"], rotation.roll)
 
-            box = YOLOModelResult(self.prev_values["box"]["bbox"], self.prev_values["box"]["score"])
-            rotation = ResNetModelResult(self.prev_values["rotation"]["yaw"], self.prev_values["rotation"]["pitch"], self.prev_values["rotation"]["roll"])
             image = YOLOModel.visualize(image, box)
             image = ResNetModel.visualize(image, box, rotation)
+
+        box = YOLOModelResult(self.prev_values["box"]["bbox"], self.prev_values["box"]["score"])
+        rotation = ResNetModelResult(self.prev_values["rotation"]["yaw"], self.prev_values["rotation"]["pitch"], self.prev_values["rotation"]["roll"])
 
         return ImageProcessorResult(
             image=image,
