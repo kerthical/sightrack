@@ -17,7 +17,7 @@ class ImageProcessor:
         self.kalman_filters = [create_kalman_filter() for _ in range(8)]
         self.result_history = []
 
-    def process(self, image: np.array) -> ImageProcessorResult:
+    def process(self, image: np.array, raw: bool) -> ImageProcessorResult:
         raw_result = self.sixdof_model.inference(image)
         detected = bool(raw_result)
 
@@ -46,7 +46,11 @@ class ImageProcessor:
                 pitch=measurements[6],
                 roll=measurements[7],
             )
-            image = SixDOFModel.visualize(image, result, self.result_history) if result else image
+            if result:
+                if raw:
+                    image = SixDOFModel.visualize_raw(image, result)
+                else:
+                    image = SixDOFModel.visualize(image, result, self.result_history)
         elif self.result_history:
             predicted_measurements = []
             for kf in self.kalman_filters:

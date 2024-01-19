@@ -127,6 +127,15 @@ class SixDOFModel:
         return SixDOFModelResult(box[0], float(box[1]), yaw_deg, pitch_deg, roll_deg)
 
     @staticmethod
+    def visualize_raw(input_image: np.ndarray, result: SixDOFModelResult):
+        image = np.copy(input_image)
+        cv2.rectangle(image, (int(result.bbox[0]), int(result.bbox[1])), (int(result.bbox[2]), int(result.bbox[3])), (0, 255, 0), 2)
+        cv2.putText(image, "yaw=%.2f, pitch=%.2f, roll=%.2f" % (result.yaw, result.pitch, result.roll), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        draw_axis(image, result.yaw * np.pi / -180, 0, 0, 100, 100, 100, color=(0, 255, 0))
+        return image
+
+
+    @staticmethod
     def visualize(
         input_image: np.ndarray, result: SixDOFModelResult, result_history: list[SixDOFModelResult]
     ) -> np.ndarray:
@@ -181,10 +190,6 @@ class SixDOFModel:
                 cv2.putText(background_side_image, "median: yaw=%.2f, pitch=%.2f, roll=%.2f" % (median_yaw, median_pitch, median_roll), (10, start_y + 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
                 cv2.putText(background_side_image, "delta: yaw=%.2f, pitch=%.2f, roll=%.2f" % (delta_yaw, delta_pitch, delta_roll), (10, start_y + 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
                 cv2.putText(background_side_image, "dispersion: %.2f" % dispersion, (10, start_y + 120), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-                rr.log("video/result/current", rr.AnyValues(current=[yaw, pitch, roll]))
-                rr.log("video/result/median", rr.AnyValues(median=[median_yaw, median_pitch, median_roll]))
-                rr.log("video/result/delta", rr.AnyValues(delta=[delta_yaw, delta_pitch, delta_roll]))
-                rr.log("video/result/dispersion", rr.AnyValues(dispersion=dispersion))
 
         cropped_face_image = image[y1 - 30 : y2 + 30, x1 - 30 : x2 + 30]
         cropped_face_image = cv2.resize(
